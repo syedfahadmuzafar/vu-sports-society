@@ -1,0 +1,143 @@
+package com.vusports.bc220200768.viewmodel.admin
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+class ScheduleEventViewModel : ViewModel() {
+
+    private val firestore = FirebaseFirestore.getInstance()
+
+    val eventName = MutableStateFlow("")
+    val venue = MutableStateFlow("")
+    val timing = MutableStateFlow("")
+    val date = MutableStateFlow("")
+    val equipment = MutableStateFlow("")
+    val staffRequired = MutableStateFlow("")
+    val maxParticipants = MutableStateFlow("")
+    val logistics = MutableStateFlow("")
+    
+    private val _events = MutableStateFlow<List<EventData>>(emptyList())
+    val events: StateFlow<List<EventData>> = _events.asStateFlow()
+    
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage.asStateFlow()
+    
+    init {
+        loadEvents()
+    }
+    
+    fun loadEvents() {
+        _isLoading.value = true
+        firestore.collection("events")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val eventsList = snapshot.documents.mapNotNull { doc ->
+                    val id = doc.id
+                    val name = doc.getString("eventName") ?: return@mapNotNull null
+                    val venue = doc.getString("venue") ?: "-"
+                    val timing = doc.getString("timing") ?: "-"
+                    val date = doc.getString("date") ?: "-"
+                    val equipment = doc.getString("equipment") ?: "-"
+                    val staffRequired = doc.getString("staffRequired") ?: "-"
+                    val maxParticipants = doc.getString("maxParticipants") ?: "-"
+                    val logistics = doc.getString("logistics") ?: "-"
+                    
+                    EventData(id, name, venue, timing, date, equipment, staffRequired, maxParticipants, logistics)
+                }
+                _events.value = eventsList
+                _isLoading.value = false
+            }
+            .addOnFailureListener {
+                _snackbarMessage.value = "❌ Failed to load events: ${it.message}"
+                _isLoading.value = false
+            }
+    }
+
+    fun scheduleEvent() {
+        if (eventName.value.isBlank() || venue.value.isBlank() || timing.value.isBlank() || date.value.isBlank()) {
+            _snackbarMessage.value = "⚠️ Event name, venue, timing, and date are required"
+            return
+        }
+
+        val eventData = mapOf(
+            "eventName" to eventName.value,
+            "venue" to venue.value,
+            "timing" to timing.value,
+            "date" to date.value,
+            "equipment" to equipment.value,
+            "staffRequired" to staffRequired.value,
+            "maxParticipants" to maxParticipants.value,
+            "logistics" to logistics.value,
+            "timestamp" to System.currentTimeMillis()
+        )
+
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                firestore.collection("events")
+                    .add(eventData)
+                    .addOnSuccessListener {
+                        _snackbarMessage.value = "✅ Event scheduled successfully"
+                        clearFields()
+                        loadEvents() // Refresh the events list
+                    }
+                    .addOnFailureListener {
+                        _snackbarMessage.value = "❌ Failed to schedule event"
+                        _isLoading.value = false
+                    }
+            } catch (e: Exception) {
+                _snackbarMessage.value = "❌ ${e.message}"
+                _isLoading.value = false
+            }
+        }
+    }
+    
+    fun deleteEvent(eventId: String) {
+        _isLoading.value = true
+        firestore.collection("events").document(eventId)
+            .delete()
+            .addOnSuccessListener {
+                _snackbarMessage.value = "✅ Event deleted successfully"
+                loadEvents() // Refresh the events list
+            }
+            .addOnFailureListener {
+                _snackbarMessage.value = "❌ Failed to delete event: ${it.message}"
+                _isLoading.value = false
+            }
+    }
+
+    private fun clearFields() {
+        eventName.value = ""
+        venue.value = ""
+        timing.value = ""
+        date.value = ""
+        equipment.value = ""
+        staffRequired.value = ""
+        maxParticipants.value = ""
+        logistics.value = ""
+    }
+
+    fun clearSnackbar() {
+        _snackbarMessage.value = null
+    }
+    
+    data class EventData(
+        val id: String,
+        val name: String,
+        val venue: String,
+        val timing: String,
+        val date: String,
+        val equipment: String,
+        val staffRequired: String,
+        val maxParticipants: String,
+        val logistics: String
+    )
+}
