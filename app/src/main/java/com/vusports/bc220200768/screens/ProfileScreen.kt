@@ -117,8 +117,7 @@ fun ProfileScreen(navController: NavController) {
             } else {
                 it.get("preferences") as? List<String> ?: emptyList()
             }
-            
-            // Get approved and rejected preferences for participants
+
             if (userRole == "participant") {
                 approvedSports = it.get("approved_preferences") as? List<String> ?: emptyList()
                 rejectedSports = it.get("rejected_preferences") as? List<String> ?: emptyList()
@@ -189,7 +188,7 @@ fun ProfileScreen(navController: NavController) {
 
         Spacer(Modifier.height(8.dp))
 
-        // Sports
+        // Sports Section
         SectionCard(if (userRole == "coach") "Sports Expertise" else "Preferred Sports") {
             if (userSports.isEmpty()) {
                 Text("No sports selected.", color = Color.Gray)
@@ -198,75 +197,22 @@ fun ProfileScreen(navController: NavController) {
                     userSports.forEach { sport ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("• $sport", modifier = Modifier.padding(vertical = 2.dp))
-                            
                             if (userRole == "participant") {
                                 Spacer(Modifier.width(4.dp))
                                 when {
                                     approvedSports.contains(sport) -> {
-                                        Icon(
-                                            imageVector = Icons.Default.CheckCircle,
-                                            contentDescription = "Approved",
-                                            tint = Color(0xFF4CAF50),
-                                            modifier = Modifier.size(16.dp)
-                                        )
+                                        Icon(Icons.Default.CheckCircle, "Approved", tint = Color(0xFF4CAF50), modifier = Modifier.size(16.dp))
                                         Spacer(Modifier.width(4.dp))
-                                        Text(
-                                            "Approved",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color(0xFF4CAF50),
-                                            modifier = Modifier.padding(start = 2.dp)
-                                        )
+                                        Text("Approved", color = Color(0xFF4CAF50), fontSize = 12.sp)
                                     }
                                     rejectedSports.contains(sport) -> {
-                                        Icon(
-                                            imageVector = Icons.Default.Cancel,
-                                            contentDescription = "Rejected",
-                                            tint = Color(0xFFF44336),
-                                            modifier = Modifier.size(16.dp)
-                                        )
+                                        Icon(Icons.Default.Cancel, "Rejected", tint = Color(0xFFF44336), modifier = Modifier.size(16.dp))
                                         Spacer(Modifier.width(4.dp))
-                                        Text(
-                                            "Rejected",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color(0xFFF44336),
-                                            modifier = Modifier.padding(start = 2.dp)
-                                        )
+                                        Text("Rejected", color = Color(0xFFF44336), fontSize = 12.sp)
                                     }
-                                    else -> {
-                                        Text(
-                                            "(Pending)",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color(0xFFFFA000),
-                                            modifier = Modifier.padding(start = 4.dp)
-                                        )
-                                    }
+                                    else -> Text("(Pending)", color = Color(0xFFFFA000), fontSize = 12.sp)
                                 }
                             }
-                        }
-                    }
-                    
-                    if (userRole == "participant") {
-                        Spacer(Modifier.height(8.dp))
-                        if (userSports.any { !approvedSports.contains(it) && !rejectedSports.contains(it) }) {
-                            Text(
-                                "Pending preferences require coach approval",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.Gray
-                            )
-                        }
-                        if (approvedSports.isNotEmpty()) {
-                            Text(
-                                "You can participate in approved sports",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF4CAF50)
-                            )
-                        }
-                        if (rejectedSports.isNotEmpty()) {
-                            Text(
-                                "You can't participate in rejected sports",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFF44336)
-                            )
                         }
                     }
                 }
@@ -305,9 +251,7 @@ fun ProfileScreen(navController: NavController) {
         SettingItem(
             if (userRole == "coach") "Sports Expertise" else "Preferred Sports",
             userSports.joinToString(), Icons.Default.Sports
-        ) {
-            showPreferencesDialog = true
-        }
+        ) { showPreferencesDialog = true }
 
         if (userRole == "coach") {
             SettingItem("Team Management", teamManagement, Icons.Default.Group) {
@@ -340,109 +284,7 @@ fun ProfileScreen(navController: NavController) {
         Spacer(Modifier.height(24.dp))
     }
 
-    // Edit Dialog
-    if (showEditDialog) {
-        var validationError by remember { mutableStateOf("") }
-
-        fun isValidName(name: String): Boolean {
-            return name.isNotEmpty() && name.all { it.isLetter() || it.isWhitespace() }
-        }
-
-        fun isValidEmail(email: String): Boolean {
-            return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-        }
-
-        fun validateField(): Boolean {
-            when (fieldToEdit) {
-                "Name" -> if (!isValidName(fieldValue)) {
-                    validationError = "Name can only contain letters and spaces"
-                    return false
-                }
-                "Email" -> if (!isValidEmail(fieldValue)) {
-                    validationError = "Please enter a valid email address"
-                    return false
-                }
-            }
-            validationError = ""
-            return true
-        }
-
-        AlertDialog(
-            onDismissRequest = { showEditDialog = false },
-            title = { Text("Edit $fieldToEdit") },
-            text = {
-                Column {
-                    OutlinedTextField(
-                        value = fieldValue,
-                        onValueChange = {
-                            fieldValue = it
-                            if (validationError.isNotEmpty()) {
-                                validateField()
-                            }
-                        },
-                        label = { Text(fieldToEdit) },
-                        modifier = Modifier.fillMaxWidth(),
-                        isError = validationError.isNotEmpty()
-                    )
-
-                    if (validationError.isNotEmpty()) {
-                        Text(
-                            text = validationError,
-                            color = Color.Red,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(start = 8.dp, top = 4.dp)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (validateField()) {
-                            scope.launch {
-                                val snapshot = db.collection("users").whereEqualTo("email", userEmail).get().await()
-                                val docId = snapshot.documents.firstOrNull()?.id
-                                docId?.let {
-                                    val update = when (fieldToEdit) {
-                                        "Name" -> {
-                                            userName = fieldValue
-                                            mapOf("name" to fieldValue)
-                                        }
-                                        "Email" -> {
-                                            userEmail = fieldValue
-                                            auth.currentUser?.updateEmail(fieldValue)?.await()
-                                            mapOf("email" to fieldValue)
-                                        }
-                                        "Team Management" -> {
-                                            teamManagement = fieldValue
-                                            mapOf("teamManagement" to fieldValue)
-                                        }
-                                        "Availability" -> {
-                                            availability = fieldValue
-                                            mapOf("availability" to fieldValue)
-                                        }
-                                        else -> emptyMap()
-                                    }
-                                    db.collection("users").document(it).update(update).await()
-                                    showEditDialog = false
-                                    Toast.makeText(context, "$fieldToEdit updated", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                    }
-                ) {
-                    Text("Save")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEditDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
-    // Sports Expertise / Preferences dialog
+    // Sports Preference / Expertise Dialog
     if (showPreferencesDialog) {
         var selectedSports by remember { mutableStateOf(userSports.toList()) }
         var errorMessage by remember { mutableStateOf("") }
@@ -455,33 +297,21 @@ fun ProfileScreen(navController: NavController) {
                 val documents = db.collection("users")
                     .whereEqualTo("role", "coach")
                     .whereEqualTo("status", "approved")
-                    .get()
-                    .await()
+                    .get().await()
 
-                val sports = mutableListOf<String>()
                 val coachSports = mutableListOf<String>()
-                
                 for (document in documents) {
                     val email = document.getString("email")
                     val expertise = document.get("expertise") as? List<*>
-                    
                     expertise?.forEach { sport ->
                         if (sport is String) {
-                            // Add to list of sports with coaches
                             coachSports.add(sport.lowercase())
-                            
-                            // For coach view, only add sports from other coaches
-                            if (userRole == "coach" && email != userEmail) {
-                                sports.add(sport.lowercase())
-                            }
                         }
                     }
                 }
-                
-                existingCoachSports = sports
+                existingCoachSports = coachSports
                 sportsWithCoaches = coachSports.distinct()
-            } catch (_: Exception) {
-            }
+            } catch (_: Exception) { }
         }
 
         AlertDialog(
@@ -490,36 +320,18 @@ fun ProfileScreen(navController: NavController) {
             text = {
                 Column {
                     if (errorMessage.isNotEmpty()) {
-                        Text(
-                            text = errorMessage,
-                            color = Color.Red,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        Text(errorMessage, color = Color.Red, fontSize = 12.sp)
+                        Spacer(Modifier.height(8.dp))
                     }
-
-                    val validationText = when (userRole) {
-                        "coach" -> "Coaches can select only one sport that doesn't already have a coach"
-                        else -> "Participants can select up to 2 sports"
-                    }
-                    Text(
-                        text = validationText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
 
                     sportsOptions.forEach { sport ->
                         val isSelected = selectedSports.contains(sport)
-                        val isApproved = userRole == "participant" && approvedSports.contains(sport)
                         val hasCoach = sportsWithCoaches.contains(sport.lowercase())
                         val isDisabled = when {
-                            // For coaches: disable if another coach has this sport or coach already selected a different sport
                             userRole == "coach" && existingCoachSports.contains(sport.lowercase()) && !isSelected -> true
-                            userRole == "coach" && selectedSports.isNotEmpty() && !isSelected -> true
-                            // For participants: disable if no coach for this sport or already selected 2 sports
-                            userRole == "participant" && !hasCoach -> true
+                            userRole == "coach" && selectedSports.size >= 1 && !isSelected -> false
                             userRole == "participant" && selectedSports.size >= 2 && !isSelected -> true
+                            userRole == "participant" && !hasCoach -> true
                             else -> false
                         }
 
@@ -531,25 +343,22 @@ fun ProfileScreen(navController: NavController) {
                                     if (checked) {
                                         when (userRole) {
                                             "coach" -> {
-                                                if (existingCoachSports.contains(sport.lowercase())) {
-                                                    errorMessage = "This sport already has a coach"
+                                                if (existingCoachSports.contains(sport.lowercase()) && !selectedSports.contains(sport)) {
+                                                    errorMessage = "This sport already has a coach assigned"
                                                 } else if (selectedSports.isNotEmpty() && !selectedSports.contains(sport)) {
-                                                    errorMessage = "Coaches can only select one sport"
+                                                    errorMessage = "Unselect your current sport before choosing another"
                                                 } else {
                                                     errorMessage = ""
-                                                    if (!selectedSports.contains(sport)) {
-                                                        selectedSports = selectedSports + sport
-                                                    }
+                                                    selectedSports = listOf(sport)
                                                 }
                                             }
-                                            else -> {
+
+                                            "participant" -> {
                                                 if (selectedSports.size >= 2 && !selectedSports.contains(sport)) {
-                                                    errorMessage = "Participants can only select up to 2 sports"
+                                                    errorMessage = "You can only select up to 2 sports"
                                                 } else {
                                                     errorMessage = ""
-                                                    if (!selectedSports.contains(sport)) {
-                                                        selectedSports = selectedSports + sport
-                                                    }
+                                                    selectedSports = selectedSports + sport
                                                 }
                                             }
                                         }
@@ -557,44 +366,22 @@ fun ProfileScreen(navController: NavController) {
                                         errorMessage = ""
                                         selectedSports = selectedSports - sport
                                     }
-                                },
-                                
+                                }
                             )
-                            
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
+
+                            Text(
                                 text = sport,
-                                color = if (isDisabled || (userRole == "participant" && !hasCoach)) Color.Gray else Color.Black
+                                color = if (isDisabled) Color.Gray else Color.Black
                             )
-                                
-                                if (isApproved && isSelected) {
-                                    Spacer(Modifier.width(4.dp))
-                                    Icon(
-                                        imageVector = Icons.Default.CheckCircle,
-                                        contentDescription = "Approved",
-                                        tint = Color(0xFF4CAF50),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                                
-                                if (userRole == "participant" && !hasCoach) {
-                                    Spacer(Modifier.width(4.dp))
-                                    Text(
-                                        text = "(No coach available)",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.Gray,
-                                        modifier = Modifier.padding(start = 4.dp)
-                                    )
-                                }
-                            }
 
                             if (userRole == "coach" && existingCoachSports.contains(sport.lowercase()) && !isSelected) {
-                                Spacer(Modifier.weight(1f))
-                                Text(
-                                    "(Has coach)",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.Gray
-                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text("(Has coach)", color = Color.Gray, fontSize = 12.sp)
+                            }
+
+                            if (userRole == "participant" && !hasCoach) {
+                                Spacer(Modifier.width(6.dp))
+                                Text("(No coach)", color = Color.Gray, fontSize = 12.sp)
                             }
                         }
                     }
@@ -606,43 +393,18 @@ fun ProfileScreen(navController: NavController) {
                         scope.launch {
                             val snapshot = db.collection("users").whereEqualTo("email", userEmail).get().await()
                             val docId = snapshot.documents.firstOrNull()?.id
-                            
                             docId?.let {
                                 if (userRole == "coach") {
-                                    // For coaches, simply update expertise
                                     db.collection("users").document(it).update("expertise", selectedSports).await()
                                     userSports = selectedSports
                                 } else {
-                                    // For participants, handle preference changes
-                                    val newPreferences = selectedSports.toSet()
-                                    val originalPreferences = originalSports.toSet()
-                                    
-                                    // Keep approved preferences that are still selected
-                                    val newApprovedPrefs = approvedSports.filter { sport -> newPreferences.contains(sport) }
-                                    
-                                    // Update status if preferences changed
-                                    val statusUpdate = if (newPreferences != originalPreferences) {
-                                        // If all new preferences are already approved, keep status as is
-                                        if (newPreferences.all { pref -> approvedSports.contains(pref) }) {
-                                            mapOf()
-                                        } else {
-                                            // Otherwise set to pending_coach
-                                            mapOf("status" to "pending_coach")
-                                        }
-                                    } else {
-                                        mapOf()
-                                    }
-                                    
                                     val updates = mapOf(
                                         "preferences" to selectedSports,
-                                        "approved_preferences" to newApprovedPrefs
-                                    ) + statusUpdate
-                                    
+                                        "status" to "pending_coach"
+                                    )
                                     db.collection("users").document(it).update(updates).await()
                                     userSports = selectedSports
-                                    approvedSports = newApprovedPrefs
                                 }
-                                
                                 showPreferencesDialog = false
                                 Toast.makeText(context, "Updated successfully", Toast.LENGTH_SHORT).show()
                             }
@@ -654,9 +416,7 @@ fun ProfileScreen(navController: NavController) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showPreferencesDialog = false }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { showPreferencesDialog = false }) { Text("Cancel") }
             }
         )
     }

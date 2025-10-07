@@ -144,6 +144,11 @@ class RegisterViewModel : ViewModel() {
     fun isSportDisabled(sport: String): Boolean {
         return _selectedRole.value == "Coach" && _existingCoachSports.value.contains(sport.lowercase())
     }
+    
+    // Helper function to standardize sports names
+    private fun standardizeSportName(sport: String): String {
+        return sport.lowercase()
+    }
 
     fun registerUser(
         onSuccess: (Boolean) -> Unit,
@@ -173,9 +178,10 @@ class RegisterViewModel : ViewModel() {
                     )
 
                     if (roleValue == "Coach") {
-                        userData["expertise"] = selectedSports.value.map { it.lowercase() }
+                        userData["expertise"] = selectedSports.value.map { standardizeSportName(it) }
                     } else {
-                        userData["preferences"] = selectedSports.value.map { it.lowercase() }
+                        userData["preferences"] = selectedSports.value.map { standardizeSportName(it) }
+                        userData["sports"] = selectedSports.value.map { standardizeSportName(it) }
                     }
 
                     firestore.collection("users").document(emailValue)

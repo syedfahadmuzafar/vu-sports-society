@@ -54,9 +54,47 @@ class TeamManagementViewModel : ViewModel() {
         }
     }
 
+    private val _coachExpertise = MutableStateFlow("")
+    val coachExpertise: StateFlow<String> = _coachExpertise
+
     fun loadParticipants() {
         _loading.value = true
-
+        
+        // First get the coach's expertise
+        val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            db.collection("users").document(currentUser.email ?: "")
+                .get()
+                .addOnSuccessListener { document ->
+                    // Safely handle expertise field which might be of different types
+                    val expertise = try {
+                        document.getString("expertise") ?: ""
+                    } catch (e: Exception) {
+                        // If expertise is not a string, try to get it as another type and convert
+                        try {
+                            val expertiseList = document.get("expertise") as? List<*>
+                            expertiseList?.joinToString(",") ?: ""
+                        } catch (e2: Exception) {
+                            // If all else fails, use empty string
+                            ""
+                        }
+                    }
+                    _coachExpertise.value = expertise.lowercase() // Convert to lowercase for case insensitivity
+                    
+                    // Then load participants with matching expertise
+                    loadParticipantsWithMatchingExpertise(expertise.lowercase())
+                }
+                .addOnFailureListener {
+                    _feedbackMessage.value = "Failed to load coach profile."
+                    _loading.value = false
+                }
+        } else {
+            _feedbackMessage.value = "User not authenticated."
+            _loading.value = false
+        }
+    }
+    
+    private fun loadParticipantsWithMatchingExpertise(expertise: String) {
         db.collection("users").whereEqualTo("role", "participant").get()
             .addOnSuccessListener { snapshot ->
                 val all = snapshot.documents.mapNotNull { doc ->
@@ -65,6 +103,13 @@ class TeamManagementViewModel : ViewModel() {
                     val skills = doc.getString("skills") ?: ""
                     val requestedTeam = doc.getString("requestedTeam")
                     val status = doc.getString("status") ?: "none"
+                    // Get participant sports and convert to lowercase for case-insensitive comparison
+                    val participantSports = (doc.getString("sports") ?: "").lowercase()
+                    
+                    // Only include participants whose sports/interests match the coach's expertise
+                    if (expertise.isNotBlank() && !participantSports.contains(expertise)) {
+                        return@mapNotNull null
+                    }
 
                     val profile = ParticipantProfile(name, email, skills)
                     if (status == "pending" && requestedTeam == _teamName.value) {
