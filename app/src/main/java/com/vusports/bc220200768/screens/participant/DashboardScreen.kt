@@ -1,6 +1,6 @@
 package com.vusports.bc220200768.screens.participant
 
-import com.vusports.bc220200768.components.LoadingOverlay
+import LoadingOverlay
 import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background

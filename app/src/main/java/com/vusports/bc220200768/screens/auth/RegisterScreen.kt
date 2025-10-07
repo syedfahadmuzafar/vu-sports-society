@@ -1,6 +1,6 @@
 package com.vusportssociety.screens.auth
 
-import com.vusports.bc220200768.components.LoadingOverlay
+import LoadingOverlay
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult

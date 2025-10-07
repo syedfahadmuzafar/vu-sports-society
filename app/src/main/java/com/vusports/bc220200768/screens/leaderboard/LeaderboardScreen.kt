@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.vusports.bc220200768.components.LoadingOverlay
+import LoadingOverlay
 import com.vusports.bc220200768.screens.leaderboard.LeaderboardViewModel
 import com.vusports.bc220200768.screens.leaderboard.LeaderboardEntry
 

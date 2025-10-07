@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.vusports.bc220200768.components.LoadingOverlay
+import LoadingOverlay
 
 data class CoachEvent(
     val id: String,

@@ -20,7 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.vusports.bc220200768.components.LoadingOverlay
+import LoadingOverlay
 import com.vusports.bc220200768.viewmodels.coach.EventPerformanceViewModel
 import com.vusports.bc220200768.viewmodels.coach.ParticipantEventData
 

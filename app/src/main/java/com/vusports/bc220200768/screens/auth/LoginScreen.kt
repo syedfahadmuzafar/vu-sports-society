@@ -1,6 +1,6 @@
 package com.vusports.bc220200768.screens.auth
 
-import com.vusports.bc220200768.components.LoadingOverlay
+import LoadingOverlay
 import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.BackHandler

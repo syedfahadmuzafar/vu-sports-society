@@ -1,6 +1,6 @@
 package com.vusports.bc220200768.screens.coach
 
-import com.vusports.bc220200768.components.LoadingOverlay
+import LoadingOverlay
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*

@@ -72,9 +72,10 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest) 
     implementation ("com.google.firebase:firebase-storage-ktx")
+    implementation ("com.airbnb.android:lottie-compose:6.6.10")
 
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
-    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
 }
 apply(plugin = "com.google.gms.google-services")
