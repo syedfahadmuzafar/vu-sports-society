@@ -98,7 +98,7 @@ class ManageCategoriesViewModel : ViewModel() {
         
         _loading.value = true
         val newCategory = hashMapOf(
-            "name" to _newCategoryName.value,
+            "name" to _newCategoryName.value.lowercase(),
             "organizerEmail" to "",
             "organizerName" to ""
         )
