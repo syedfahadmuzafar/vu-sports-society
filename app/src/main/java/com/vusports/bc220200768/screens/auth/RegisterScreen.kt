@@ -34,7 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.vusports.bc220200768.R
-import com.vusportssociety.viewmodels.auth.RegisterViewModel
+import com.vusports.bc220200768.viewmodels.auth.RegisterViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,4 +1,4 @@
-package com.vusportssociety.viewmodels.auth
+package com.vusports.bc220200768.viewmodels.auth
 
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth

@@ -103,8 +103,20 @@ class TeamManagementViewModel : ViewModel() {
                     val skills = doc.getString("skills") ?: ""
                     val requestedTeam = doc.getString("requestedTeam")
                     val status = doc.getString("status") ?: "none"
-                    // Get participant sports and convert to lowercase for case-insensitive comparison
-                    val participantSports = (doc.getString("sports") ?: "").lowercase()
+                    // Get participant sports and handle different data types
+                    val participantSports = try {
+                        // Try to get as string first
+                        (doc.getString("sports") ?: "").lowercase()
+                    } catch (e: Exception) {
+                        try {
+                            // If not a string, try to get as list
+                            val sportsList = doc.get("sports") as? List<*>
+                            sportsList?.joinToString(",") { it.toString().lowercase() } ?: ""
+                        } catch (e2: Exception) {
+                            // If all else fails, use empty string
+                            ""
+                        }
+                    }
                     
                     // Only include participants whose sports/interests match the coach's expertise
                     if (expertise.isNotBlank() && !participantSports.contains(expertise)) {
