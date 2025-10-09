@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,6 +33,9 @@ fun ScheduleEventScreen(
     val staffRequired by viewModel.staffRequired.collectAsState()
     val maxParticipants by viewModel.maxParticipants.collectAsState()
     val logistics by viewModel.logistics.collectAsState()
+    val category by viewModel.category.collectAsState()
+    val availableCategories by viewModel.availableCategories.collectAsState()
+    val assignedCoaches by viewModel.assignedCoaches.collectAsState()
     val events by viewModel.events.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val snackbarMessage by viewModel.snackbarMessage.collectAsState()
@@ -146,6 +150,75 @@ fun ScheduleEventScreen(
                                             cursorColor = Color.Black
                                         )
                                     )
+                                    
+                                    // Category Dropdown
+                                    var expanded by remember { mutableStateOf(false) }
+                                    
+                                    Box(modifier = Modifier.fillMaxWidth()) {
+                                        OutlinedTextField(
+                                            value = category,
+                                            onValueChange = { },
+                                            label = { Text("Category", color = Color.Black) },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            readOnly = true,
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedBorderColor = Color(0xFF00BFA6),
+                                                unfocusedBorderColor = Color.Gray,
+                                                focusedTextColor = Color.Black,
+                                                unfocusedTextColor = Color.Black,
+                                                cursorColor = Color.Black
+                                            ),
+                                            trailingIcon = {
+                                                IconButton(onClick = { expanded = !expanded }) {
+                                                    Icon(
+                                                        imageVector = androidx.compose.material.icons.Icons.Filled.ArrowDropDown,
+                                                        contentDescription = "Dropdown"
+                                                    )
+                                                }
+                                            }
+                                        )
+                                        
+                                        DropdownMenu(
+                                            expanded = expanded,
+                                            onDismissRequest = { expanded = false },
+                                            modifier = Modifier.fillMaxWidth(0.9f)
+                                        ) {
+                                            availableCategories.forEach { categoryOption ->
+                                                DropdownMenuItem(
+                                                    text = { Text(categoryOption) },
+                                                    onClick = {
+                                                        viewModel.onCategorySelected(categoryOption)
+                                                        expanded = false
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Display assigned coaches if any
+                                    if (assignedCoaches.isNotEmpty()) {
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 8.dp)
+                                        ) {
+                                            Text(
+                                                "Assigned Coaches:",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF00BFA6)
+                                            )
+                                            
+                                            assignedCoaches.forEach { coach ->
+                                                Text(
+                                                    "• $coach",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = Color.DarkGray,
+                                                    modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+                                                )
+                                            }
+                                        }
+                                    }
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -391,6 +464,20 @@ fun EventCard(
             }
             
             Divider(modifier = Modifier.padding(vertical = 8.dp))
+            
+            Text(
+                text = "Category",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+            Text(
+                text = event.category,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF00BFA6),
+                fontWeight = FontWeight.Bold
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
             
             Row(
                 modifier = Modifier.fillMaxWidth(),

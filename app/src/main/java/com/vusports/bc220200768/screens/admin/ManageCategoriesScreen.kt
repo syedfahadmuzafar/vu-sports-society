@@ -31,6 +31,8 @@ fun ManageCategoriesScreen(
     val organizers by viewModel.organizers.collectAsState()
     val loading by viewModel.loading.collectAsState()
     val newCategoryName by viewModel.newCategoryName.collectAsState()
+    val newRoles by viewModel.newRoles.collectAsState()
+    val currentRole by viewModel.currentRole.collectAsState()
     val message by viewModel.message.collectAsState()
 
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
@@ -136,6 +138,85 @@ fun ManageCategoriesScreen(
                                     contentDescription = "Add Category"
                                 )
                             }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            "Add Roles for this Category",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            OutlinedTextField(
+                                value = currentRole,
+                                onValueChange = { viewModel.updateCurrentRole(it) },
+                                label = { Text("Role Name") },
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF00BFA6),
+                                    unfocusedBorderColor = Color.Gray,
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black
+                                )
+                            )
+                            
+                            Spacer(modifier = Modifier.width(8.dp))
+                            
+                            Button(
+                                onClick = { viewModel.addRole() },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BFA6))
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = "Add Role")
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Display added roles
+                        if (newRoles.isNotEmpty()) {
+                            Text(
+                                "Added Roles:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            LazyColumn(
+                                modifier = Modifier
+                                    .heightIn(max = 120.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                items(newRoles) { role ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            role,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        IconButton(
+                                            onClick = { viewModel.removeRole(role) }
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Delete,
+                                                contentDescription = "Remove Role",
+                                                tint = Color.Red
+                                            )
+                                        }
+                                    }
+                            }
+                        }
                         }
                     }
                 }

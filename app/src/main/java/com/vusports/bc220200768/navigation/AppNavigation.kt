@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.vusports.bc220200768.screens.EventScreen
 import com.vusports.bc220200768.screens.ProfileScreen
 import com.vusports.bc220200768.screens.admin.AdminDashboardScreen
+import com.vusports.bc220200768.screens.admin.ApproveResultsScreen
 import com.vusports.bc220200768.screens.admin.ApproveTeamsEventsScreen
 import com.vusports.bc220200768.screens.admin.ManageCategoriesScreen
 import com.vusports.bc220200768.screens.admin.ManageUsersScreen
@@ -21,6 +22,7 @@ import com.vusports.bc220200768.screens.coach.CoachDashboardScreen
 import com.vusports.bc220200768.screens.coach.CreateEventScreen
 import com.vusports.bc220200768.screens.coach.EventPerformanceScreen
 import com.vusports.bc220200768.screens.coach.EventSelectorScreen
+import com.vusports.bc220200768.screens.coach.OrganizeEventScreen
 import com.vusports.bc220200768.screens.coach.ParticipantPointsScreen
 import com.vusports.bc220200768.screens.coach.TeamManagementScreen
 import com.vusports.bc220200768.screens.coach.TeamScreen
@@ -57,6 +59,7 @@ fun AppNavigation(navController: NavHostController) {
         composable("modify_profiles") { ModifyProfilesScreen(navController) }
         composable("manage_users") { ManageUsersScreen() }
         composable("approve_teams_events") { ApproveTeamsEventsScreen() }
+        composable("approve_results") { ApproveResultsScreen(navController) }
         composable("schedule_events") { ScheduleEventScreen() }
         composable("send_notifications") {
             NotificationsScreen(
@@ -85,6 +88,10 @@ fun AppNavigation(navController: NavHostController) {
         composable("event_performance/{eventId}") { backStackEntry ->
             val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
             EventPerformanceScreen(navController, eventId)
+        }
+        
+        composable("organize_events") {
+            OrganizeEventScreen(navController)
         }
 
 

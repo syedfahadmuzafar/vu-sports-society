@@ -25,6 +25,12 @@ class ManageCategoriesViewModel : ViewModel() {
     private val _newCategoryName = MutableStateFlow("")
     val newCategoryName: StateFlow<String> = _newCategoryName
     
+    private val _newRoles = MutableStateFlow<List<String>>(emptyList())
+    val newRoles: StateFlow<List<String>> = _newRoles
+    
+    private val _currentRole = MutableStateFlow("")
+    val currentRole: StateFlow<String> = _currentRole
+    
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message
 
@@ -33,11 +39,13 @@ class ManageCategoriesViewModel : ViewModel() {
         viewModelScope.launch {
             db.collection("categories").get().addOnSuccessListener { result ->
                 _categories.value = result.documents.map {
+                    val rolesList = it.get("roles") as? List<String> ?: emptyList()
                     Category(
                         id = it.id,
                         name = it.getString("name") ?: "",
                         organizerEmail = it.getString("organizerEmail") ?: "",
-                        organizerName = it.getString("organizerName") ?: ""
+                        organizerName = it.getString("organizerName") ?: "",
+                        roles = rolesList
                     )
                 }
                 _loading.value = false
@@ -84,6 +92,22 @@ class ManageCategoriesViewModel : ViewModel() {
         _newCategoryName.value = name
     }
     
+    fun updateCurrentRole(role: String) {
+        _currentRole.value = role
+    }
+    
+    fun addRole() {
+        if (_currentRole.value.isBlank()) return
+        if (_newRoles.value.contains(_currentRole.value)) return
+        
+        _newRoles.value = _newRoles.value + _currentRole.value
+        _currentRole.value = ""
+    }
+    
+    fun removeRole(role: String) {
+        _newRoles.value = _newRoles.value.filter { it != role }
+    }
+    
     fun addCategory(onSuccess: () -> Unit, onError: (String) -> Unit) {
         if (_newCategoryName.value.isBlank()) {
             onError("Category name cannot be empty")
@@ -100,7 +124,8 @@ class ManageCategoriesViewModel : ViewModel() {
         val newCategory = hashMapOf(
             "name" to _newCategoryName.value.lowercase(),
             "organizerEmail" to "",
-            "organizerName" to ""
+            "organizerName" to "",
+            "roles" to _newRoles.value
         )
         
         db.collection("categories")
@@ -108,7 +133,7 @@ class ManageCategoriesViewModel : ViewModel() {
             .addOnSuccessListener { documentRef ->
                 val addedCategory = Category(
                     id = documentRef.id,
-                    name = _newCategoryName.value,
+                    name = _newCategoryName.value.lowercase(),
                     organizerEmail = "",
                     organizerName = ""
                 )

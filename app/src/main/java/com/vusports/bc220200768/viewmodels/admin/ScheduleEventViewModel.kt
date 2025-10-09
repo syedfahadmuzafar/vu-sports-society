@@ -20,6 +20,13 @@ class ScheduleEventViewModel : ViewModel() {
     val staffRequired = MutableStateFlow("")
     val maxParticipants = MutableStateFlow("")
     val logistics = MutableStateFlow("")
+    val category = MutableStateFlow("")
+    
+    private val _availableCategories = MutableStateFlow<List<String>>(emptyList())
+    val availableCategories: StateFlow<List<String>> = _availableCategories.asStateFlow()
+    
+    private val _assignedCoaches = MutableStateFlow<List<String>>(emptyList())
+    val assignedCoaches: StateFlow<List<String>> = _assignedCoaches.asStateFlow()
     
     private val _events = MutableStateFlow<List<EventData>>(emptyList())
     val events: StateFlow<List<EventData>> = _events.asStateFlow()
@@ -32,6 +39,71 @@ class ScheduleEventViewModel : ViewModel() {
     
     init {
         loadEvents()
+        loadAvailableCategories()
+    }
+    
+    private fun loadAvailableCategories() {
+        _isLoading.value = true
+        firestore.collection("categories")
+            .get()
+            .addOnSuccessListener { result ->
+                val categories = result.documents.mapNotNull { it.getString("name") }
+                _availableCategories.value = categories
+                _isLoading.value = false
+            }
+            .addOnFailureListener { e ->
+                _snackbarMessage.value = "Failed to load categories: ${e.message}"
+                _isLoading.value = false
+                // Fallback to default categories if loading fails
+                _availableCategories.value = listOf("Cricket", "Football", "Basketball", "Tennis", "Swimming")
+            }
+    }
+    
+    fun onCategorySelected(newCategory: String) {
+        category.value = newCategory
+        // When category changes, find coaches with matching expertise
+        findCoachesForCategory(newCategory)
+    }
+    
+    private fun findCoachesForCategory(category: String) {
+        _isLoading.value = true
+        val lowerCaseCategory = category.lowercase()
+        
+        firestore.collection("users")
+            .whereEqualTo("role", "coach")
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val coachEmails = snapshot.documents.mapNotNull { doc ->
+                    val email = doc.id
+                    // Get coach expertise and handle different data types
+                    val expertise = try {
+                        // Try to get as string first
+                        (doc.getString("expertise") ?: "").lowercase()
+                    } catch (e: Exception) {
+                        try {
+                            // If not a string, try to get as list
+                            val expertiseList = doc.get("expertise") as? List<*>
+                            expertiseList?.joinToString(",") { it.toString().lowercase() } ?: ""
+                        } catch (e2: Exception) {
+                            // If all else fails, use empty string
+                            ""
+                        }
+                    }
+                    
+                    // Only include coaches whose expertise matches the selected category
+                    if (expertise.contains(lowerCaseCategory)) {
+                        email
+                    } else {
+                        null
+                    }
+                }
+                _assignedCoaches.value = coachEmails
+                _isLoading.value = false
+            }
+            .addOnFailureListener {
+                _snackbarMessage.value = "❌ Failed to find coaches: ${it.message}"
+                _isLoading.value = false
+            }
     }
     
     fun loadEvents() {
@@ -49,8 +121,16 @@ class ScheduleEventViewModel : ViewModel() {
                     val staffRequired = doc.getString("staffRequired") ?: "-"
                     val maxParticipants = doc.getString("maxParticipants") ?: "-"
                     val logistics = doc.getString("logistics") ?: "-"
+                    val category = doc.getString("category") ?: "-"
                     
-                    EventData(id, name, venue, timing, date, equipment, staffRequired, maxParticipants, logistics)
+                    // Get assigned coaches
+                    val assignedCoaches = try {
+                        (doc.get("assignedCoaches") as? List<*>)?.mapNotNull { it.toString() } ?: emptyList()
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                    
+                    EventData(id, name, venue, timing, date, equipment, staffRequired, maxParticipants, logistics, category, assignedCoaches)
                 }
                 _events.value = eventsList
                 _isLoading.value = false
@@ -62,8 +142,8 @@ class ScheduleEventViewModel : ViewModel() {
     }
 
     fun scheduleEvent() {
-        if (eventName.value.isBlank() || venue.value.isBlank() || timing.value.isBlank() || date.value.isBlank()) {
-            _snackbarMessage.value = "⚠️ Event name, venue, timing, and date are required"
+        if (eventName.value.isBlank() || venue.value.isBlank() || timing.value.isBlank() || date.value.isBlank() || category.value.isBlank()) {
+            _snackbarMessage.value = "⚠️ Event name, venue, timing, date, and category are required"
             return
         }
 
@@ -76,7 +156,14 @@ class ScheduleEventViewModel : ViewModel() {
             "staffRequired" to staffRequired.value,
             "maxParticipants" to maxParticipants.value,
             "logistics" to logistics.value,
-            "timestamp" to System.currentTimeMillis()
+            "category" to category.value.lowercase(), // Store category in lowercase for consistency
+            "assignedCoaches" to _assignedCoaches.value,
+            "timestamp" to System.currentTimeMillis(),
+            "coachOrganized" to false,
+            "organizingCoach" to "",
+            "teamLineup" to emptyMap<String, List<String>>(),
+            "matchResults" to emptyMap<String, String>(),
+            "resultsApproved" to false
         )
 
         viewModelScope.launch {
@@ -123,6 +210,8 @@ class ScheduleEventViewModel : ViewModel() {
         staffRequired.value = ""
         maxParticipants.value = ""
         logistics.value = ""
+        category.value = ""
+        _assignedCoaches.value = emptyList()
     }
 
     fun clearSnackbar() {
@@ -130,14 +219,21 @@ class ScheduleEventViewModel : ViewModel() {
     }
     
     data class EventData(
-        val id: String,
-        val name: String,
-        val venue: String,
-        val timing: String,
-        val date: String,
-        val equipment: String,
-        val staffRequired: String,
-        val maxParticipants: String,
-        val logistics: String
-    )
+    val id: String = "",
+    val name: String = "",
+    val venue: String = "",
+    val timing: String = "",
+    val date: String = "",
+    val equipment: String = "",
+    val staffRequired: String = "",
+    val maxParticipants: String = "",
+    val logistics: String = "",
+    val category: String = "",
+    val assignedCoaches: List<String> = emptyList(),
+    val coachOrganized: Boolean = false,
+    val organizingCoach: String = "",
+    val teamLineup: Map<String, List<String>> = emptyMap(),
+    val matchResults: Map<String, String> = emptyMap(),
+    val resultsApproved: Boolean = false
+)
 }

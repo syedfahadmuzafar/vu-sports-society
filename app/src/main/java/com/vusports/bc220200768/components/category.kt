@@ -5,5 +5,6 @@ data class Category(
     val id: String = "",
     val name: String = "",
     val organizerEmail: String = "",
-    val organizerName: String = ""
+    val organizerName: String = "",
+    val roles: List<String> = emptyList()
 )
