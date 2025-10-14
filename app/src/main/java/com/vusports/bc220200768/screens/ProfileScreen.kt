@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.vusports.bc220200768.R
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,8 +35,11 @@ import coil.compose.rememberAsyncImagePainter
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import android.util.Log
+import com.google.firebase.storage.storageMetadata
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +68,7 @@ fun ProfileScreen(navController: NavController) {
     var fieldValue by remember { mutableStateOf("") }
     var showPreferencesDialog by remember { mutableStateOf(false) }
 
+
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
@@ -73,19 +78,42 @@ fun ProfileScreen(navController: NavController) {
 
                 uri?.let {
                     scope.launch {
-                        imageRef.putFile(it).await()
-                        val downloadUrl = imageRef.downloadUrl.await().toString()
+                        try {
+                            // Show loading indicator
+                            isLoading = true
+                            
+                            // Upload image to Firebase Storage with explicit content type
+                            val uploadTask = imageRef.putFile(
+                                it, 
+                                storageMetadata { contentType = "image/jpeg" }
+                            )
+                            uploadTask.await()
+                            
+                            // Wait for the upload to complete before getting download URL
+                            val downloadUrl = imageRef.downloadUrl.await().toString()
 
-                        val snapshot =
-                            db.collection("users").whereEqualTo("email", userEmail).get().await()
-                        val docId = snapshot.documents.firstOrNull()?.id
+                            // Update user document in Firestore
+                            val currentUser = auth.currentUser
+                            if (currentUser != null) {
+                                // First try to find by email
+                                val snapshot = db.collection("users").whereEqualTo("email", userEmail).get().await()
+                                val docId = snapshot.documents.firstOrNull()?.id
+                                    ?: currentUser.uid // Fallback to UID if email search fails
 
-                        docId?.let {
-                            db.collection("users").document(it).update("image", downloadUrl)
-                                .addOnSuccessListener {
-                                    userImage = downloadUrl
-                                    Toast.makeText(context, "Profile picture updated!", Toast.LENGTH_SHORT).show()
-                                }
+                                db.collection("users").document(docId).update("image", downloadUrl)
+                                    .await()
+                                
+                                // Update local state
+                                userImage = downloadUrl
+                                Toast.makeText(context, "Profile picture updated successfully!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "User not authenticated", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: Exception) {
+                            Log.e("ProfileScreen", "Profile picture upload error: ${e.message}", e)
+                            Toast.makeText(context, "Failed to update profile picture: ${e.message}", Toast.LENGTH_SHORT).show()
+                        } finally {
+                            isLoading = false
                         }
                     }
                 }
@@ -154,7 +182,7 @@ fun ProfileScreen(navController: NavController) {
                 Box(contentAlignment = Alignment.BottomEnd) {
                     Image(
                         painter = rememberAsyncImagePainter(userImage.ifEmpty {
-                            "https://firebasestorage.googleapis.com/v0/b/YOUR_BUCKET/o/default_profile.png?alt=media"
+                            R.drawable.default_user
                         }),
                         contentDescription = null,
                         modifier = Modifier

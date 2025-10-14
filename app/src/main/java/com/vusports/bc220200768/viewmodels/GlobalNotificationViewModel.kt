@@ -21,7 +21,7 @@ class GlobalNotificationViewModel : ViewModel() {
     init {
         fetchNotifications()
     }
-    
+
     fun fetchNotifications() {
         val currentUser = auth.currentUser ?: return
         
@@ -37,6 +37,7 @@ class GlobalNotificationViewModel : ViewModel() {
                 val currentTime = System.currentTimeMillis()
                 db.collection("global_notifications")
                     .whereGreaterThan("expirationTime", currentTime)
+                    .whereEqualTo("type", "slider") // Only fetch slider notifications for dashboard
                     .get()
                     .addOnSuccessListener { snapshot ->
                         val validNotifications = snapshot.documents.mapNotNull { doc ->
@@ -67,7 +68,7 @@ class GlobalNotificationViewModel : ViewModel() {
                     }
             }
     }
-    
+
     // Rotate to next notification if there are multiple
     fun rotateNotification() {
         val allNotifications = _notifications.value

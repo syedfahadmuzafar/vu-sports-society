@@ -1,15 +1,22 @@
 package com.vusports.bc220200768.viewmodels.auth
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class RegisterViewModel : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
+    private val storage = FirebaseStorage.getInstance()
 
     val roles = listOf("Participant", "Coach")
     
@@ -101,6 +108,13 @@ class RegisterViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow("")
     val errorMessage: StateFlow<String> = _errorMessage
     
+    private val _profileImageUri = MutableStateFlow<Uri?>(null)
+    val profileImageUri: StateFlow<Uri?> = _profileImageUri
+    
+    fun setProfileImageUri(uri: Uri?) {
+        _profileImageUri.value = uri
+    }
+    
     fun toggleSport(sport: String) {
         if (_selectedSports.value.contains(sport)) {
             // Remove sport if already selected
@@ -169,8 +183,9 @@ class RegisterViewModel : ViewModel() {
         auth.createUserWithEmailAndPassword(emailValue, password.value)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+                    val userId = auth.currentUser?.uid ?: ""
                     val userData = mutableMapOf<String, Any>(
-                        "uid" to (auth.currentUser?.uid ?: ""),
+                        "uid" to userId,
                         "name" to name.value.trim(),
                         "email" to emailValue,
                         "role" to roleValue.lowercase(),
@@ -183,22 +198,69 @@ class RegisterViewModel : ViewModel() {
                         userData["preferences"] = selectedSports.value.map { standardizeSportName(it) }
                         userData["sports"] = selectedSports.value.map { standardizeSportName(it) }
                     }
-
-                    firestore.collection("users").document(emailValue)
-                        .set(userData)
-                        .addOnSuccessListener {
-                            _isLoading.value = false
-                            // Return true only if already approved
-                            onSuccess(status == "approved")
-                        }
-                        .addOnFailureListener { e ->
-                            _isLoading.value = false
-                            onError("Firestore Error: ${e.message}")
-                        }
+                    
+                    // Handle profile image upload
+                    val profileUri = profileImageUri.value
+                    if (profileUri != null) {
+                        uploadProfileImage(userId, profileUri, userData, emailValue, onSuccess, onError, status)
+                    } else {
+                        // No profile image to upload, just save user data
+                        saveUserData(userData, emailValue, onSuccess, onError, status)
+                    }
                 } else {
                     _isLoading.value = false
                     onError("Registration failed: ${task.exception?.localizedMessage}")
                 }
+            }
+    }
+    
+    private fun uploadProfileImage(
+        userId: String,
+        imageUri: Uri,
+        userData: MutableMap<String, Any>,
+        emailValue: String,
+        onSuccess: (Boolean) -> Unit,
+        onError: (String) -> Unit,
+        status: String
+    ) {
+        viewModelScope.launch {
+            try {
+                val imageRef = storage.reference.child("profileImages/$userId.jpg")
+                val metadata = StorageMetadata.Builder()
+                    .setContentType("image/jpeg")
+                    .build()
+                imageRef.putFile(imageUri, metadata).await()
+                val downloadUrl = imageRef.downloadUrl.await().toString()
+                
+                // Add image URL to user data
+                userData["image"] = downloadUrl
+                
+                // Save user data with image URL
+                saveUserData(userData, emailValue, onSuccess, onError, status)
+            } catch (e: Exception) {
+                _isLoading.value = false
+                onError("Failed to upload profile image: ${e.message}")
+            }
+        }
+    }
+    
+    private fun saveUserData(
+        userData: Map<String, Any>,
+        emailValue: String,
+        onSuccess: (Boolean) -> Unit,
+        onError: (String) -> Unit,
+        status: String
+    ) {
+        firestore.collection("users").document(emailValue)
+            .set(userData)
+            .addOnSuccessListener {
+                _isLoading.value = false
+                // Return true only if already approved
+                onSuccess(status == "approved")
+            }
+            .addOnFailureListener { e ->
+                _isLoading.value = false
+                onError("Firestore Error: ${e.message}")
             }
     }
 }

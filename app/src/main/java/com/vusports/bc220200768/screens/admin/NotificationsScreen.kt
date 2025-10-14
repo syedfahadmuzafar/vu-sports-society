@@ -33,6 +33,7 @@ fun NotificationsScreen(navController: NavController) {
     val selectedRole = viewModel.selectedRole.collectAsState()
     val status = viewModel.status.collectAsState()
     val notifications = viewModel.notifications.collectAsState()
+    val notificationType = viewModel.notificationType.collectAsState()
 
     var durationValue by remember { mutableStateOf("1") }
     var durationUnit by remember { mutableStateOf("hours") }
@@ -85,6 +86,51 @@ fun NotificationsScreen(navController: NavController) {
                     )
                 )
                 Spacer(modifier = Modifier.height(20.dp))
+                
+                // 🔹 Notification Type Selection
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            "Notification Type",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFF00BFA6)
+                        )
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("slider", "push").forEach { type ->
+                                OutlinedButton(
+                                    onClick = { viewModel.notificationType.value = type },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(42.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = if (notificationType.value == type) Color(0xFF00BFA6).copy(alpha = 0.1f) else Color.Transparent,
+                                        contentColor = if (notificationType.value == type) Color(0xFF00BFA6) else Color.Black
+                                    )
+                                ) {
+                                    Text(
+                                        text = type.replaceFirstChar { it.uppercase() },
+                                        fontSize = 13.sp,
+                                        fontWeight = if (notificationType.value == type) FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // 🔹 Message Card
                 Card(
@@ -167,66 +213,94 @@ fun NotificationsScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 🔹 Duration Card
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(6.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                // 🔹 Duration Card - Only show for slider notifications
+                if (notificationType.value == "slider") {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(6.dp)
                     ) {
-                        Text(
-                            "Display Duration",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
-                            )
-                        )
-
-                        OutlinedTextField(
-                            value = durationValue,
-                            onValueChange = { durationValue = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            label = { Text("Enter Time", color = Color.Black) },
-                            leadingIcon = {
-                                Icon(Icons.Default.AccessTime, contentDescription = null, tint = Color(0xFF00BFA6))
-                            },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF00BFA6),
-                                unfocusedBorderColor = Color.LightGray,
-                                focusedContainerColor = Color(0xFFF9FFFD),
-                                unfocusedContainerColor = Color(0xFFF9FFFD),
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                cursorColor = Color.Black
-                            )
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        Column(
+                            modifier = Modifier.padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            listOf("minutes", "hours", "days").forEach { unit ->
-                                OutlinedButton(
-                                    onClick = { durationUnit = unit },
-                                    modifier = Modifier.weight(1f).height(42.dp),
-                                    colors = ButtonDefaults.outlinedButtonColors(
-                                        containerColor = if (durationUnit == unit) Color(0xFF00BFA6).copy(alpha = 0.1f) else Color.Transparent,
-                                        contentColor = if (durationUnit == unit) Color(0xFF00BFA6) else Color.Black
-                                    )
-                                ) {
-                                    Text(
-                                        text = unit.replaceFirstChar { it.uppercase() },
-                                        fontSize = 13.sp,
-                                        fontWeight = if (durationUnit == unit) FontWeight.SemiBold else FontWeight.Normal
-                                    )
+                            Text(
+                                "Display Duration",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            )
+    
+                            OutlinedTextField(
+                                value = durationValue,
+                                onValueChange = { durationValue = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                label = { Text("Enter Time", color = Color.Black) },
+                                leadingIcon = {
+                                    Icon(Icons.Default.AccessTime, contentDescription = null, tint = Color(0xFF00BFA6))
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF00BFA6),
+                                    unfocusedBorderColor = Color.LightGray,
+                                    focusedContainerColor = Color(0xFFF9FFFD),
+                                    unfocusedContainerColor = Color(0xFFF9FFFD),
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    cursorColor = Color.Black
+                                )
+                            )
+    
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf("minutes", "hours", "days").forEach { unit ->
+                                    OutlinedButton(
+                                        onClick = { durationUnit = unit },
+                                        modifier = Modifier.weight(1f).height(42.dp),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            containerColor = if (durationUnit == unit) Color(0xFF00BFA6).copy(alpha = 0.1f) else Color.Transparent,
+                                            contentColor = if (durationUnit == unit) Color(0xFF00BFA6) else Color.Black
+                                        )
+                                    ) {
+                                        Text(
+                                            text = unit.replaceFirstChar { it.uppercase() },
+                                            fontSize = 13.sp,
+                                            fontWeight = if (durationUnit == unit) FontWeight.SemiBold else FontWeight.Normal
+                                        )
+                                    }
                                 }
                             }
+                        }
+                    }
+                } else {
+                    // Information text for push notifications
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF0F8FF)),
+                        elevation = CardDefaults.cardElevation(2.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                "Push Notification Info",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF00BFA6)
+                                )
+                            )
+                            Text(
+                                "Push notifications are sent immediately to users' devices and do not require a display duration.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.DarkGray
+                            )
                         }
                     }
                 }
@@ -234,15 +308,27 @@ fun NotificationsScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // 🔹 Send Button
+                val isSendingPush = viewModel.isSendingPushNotification.collectAsState()
                 Button(
                     onClick = { sendNotification() },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BFA6)),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isSendingPush.value
                 ) {
-                    Icon(Icons.Default.Send, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Send Notification", fontSize = 16.sp, color = Color.White)
+                    if (isSendingPush.value) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Sending Push Notification...", fontSize = 16.sp, color = Color.White)
+                    } else {
+                        Icon(Icons.Default.Send, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Send Notification", fontSize = 16.sp, color = Color.White)
+                    }
                 }
 
                 if (status.value.isNotEmpty()) {
@@ -288,21 +374,35 @@ fun NotificationsScreen(navController: NavController) {
                             ) {
                                 Column {
                                     Text("📌 ${notif.message}", fontWeight = FontWeight.SemiBold)
-                                    Text("Audience: ${notif.audience}", color = Color.Gray, fontSize = 13.sp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Text("Audience: ${notif.audience}", color = Color.Gray, fontSize = 13.sp)
+                                        Text("•", color = Color.Gray, fontSize = 13.sp)
+                                        Text(
+                                            text = "Type: ${notif.type.replaceFirstChar { it.uppercase() }}",
+                                            color = Color.Gray,
+                                            fontSize = 13.sp
+                                        )
+                                    }
                                 }
                             }
 
                             Spacer(Modifier.height(8.dp))
 
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                OutlinedButton(
-                                    onClick = {
-                                        editingId = notif.id
-                                        editMessage = notif.message
-                                        editDuration = "60"
-                                        editDialogOpen = true
-                                    }
-                                ) { Text("✏️ Edit", color = Color.Black) }
+                                // Only allow editing for slider notifications
+                                if (notif.type == "slider") {
+                                    OutlinedButton(
+                                        onClick = {
+                                            editingId = notif.id
+                                            editMessage = notif.message
+                                            editDuration = "60"
+                                            editDialogOpen = true
+                                        }
+                                    ) { Text("✏️ Edit", color = Color.Black) }
+                                }
                                 OutlinedButton(
                                     onClick = {
                                         viewModel.cancelNotification(notif.id)

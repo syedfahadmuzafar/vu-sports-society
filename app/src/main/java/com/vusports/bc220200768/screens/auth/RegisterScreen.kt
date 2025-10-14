@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -56,6 +55,7 @@ fun RegisterScreen(
 
     val imagePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
         profileImageUri = it
+        it?.let { uri -> viewModel.setProfileImageUri(uri) }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -89,7 +89,7 @@ fun RegisterScreen(
                     painter = if (profileImageUri != null)
                         rememberAsyncImagePainter(profileImageUri)
                     else
-                        painterResource(id = R.drawable.default_user),
+                        painterResource(id = R.drawable.default_user1),
                     contentDescription = "Profile Image",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -363,6 +363,11 @@ fun RegisterScreen(
                     }
                     
                     // All validations passed, proceed with registration
+                    if (profileImageUri == null) {
+                        Toast.makeText(context, "Please select a profile picture", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    
                     viewModel.registerUser(
                         onSuccess = { isApproved ->
                             if (isApproved) {
