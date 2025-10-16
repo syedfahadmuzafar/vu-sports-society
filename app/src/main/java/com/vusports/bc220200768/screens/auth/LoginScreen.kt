@@ -134,8 +134,9 @@ fun LoginScreen(navController: NavController) {
                     }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00BFA6),
-                    cursorColor = Color(0xFF00BFA6),
+                    focusedBorderColor = Color.Black,
+                    unfocusedBorderColor = Color.Gray,
+                    cursorColor = Color.Black,
                     errorBorderColor = MaterialTheme.colorScheme.error
                 )
             )
@@ -169,8 +170,10 @@ fun LoginScreen(navController: NavController) {
                     }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00BFA6),
-                    cursorColor = Color(0xFF00BFA6)
+                    focusedBorderColor = Color.Black,
+                    unfocusedBorderColor = Color.Gray,
+                    cursorColor = Color.Black,
+                    errorBorderColor = MaterialTheme.colorScheme.error
                 )
             )
 

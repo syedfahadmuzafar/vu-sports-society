@@ -147,7 +147,7 @@ fun WhatsAppSearchBar() {
     OutlinedTextField(
         value = searchText,
         onValueChange = { searchText = it },
-        placeholder = { Text("Search...") },
+        placeholder = { Text("Search...", color = Color.Black) },
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -156,7 +156,11 @@ fun WhatsAppSearchBar() {
             unfocusedContainerColor = Color(0xFFF0F0F0),
             focusedContainerColor = Color(0xFFF0F0F0),
             unfocusedBorderColor = Color.Transparent,
-            focusedBorderColor = Color.Transparent
+            focusedBorderColor = Color.Transparent,
+            focusedTextColor = Color.Black,
+            unfocusedTextColor = Color.Black,
+            focusedPlaceholderColor = Color.Gray,
+            unfocusedPlaceholderColor = Color.Gray
         ),
         leadingIcon = {
             Icon(

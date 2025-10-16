@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -424,14 +425,32 @@ fun NotificationsScreen(navController: NavController) {
                             OutlinedTextField(
                                 value = editMessage,
                                 onValueChange = { editMessage = it },
-                                label = { Text("Message") },
-                                modifier = Modifier.fillMaxWidth()
+                                label = { Text("Message", color = Color.Black) },
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = TextStyle(color = Color.Black),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.Black,
+                                    unfocusedBorderColor = Color.Gray,
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    focusedLabelColor = Color.Black,
+                                    unfocusedLabelColor = Color.Black
+                                )
                             )
                             OutlinedTextField(
                                 value = editDuration,
                                 onValueChange = { editDuration = it },
-                                label = { Text("Duration (minutes)") },
+                                label = { Text("Duration (minutes)", color = Color.Black) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                textStyle = TextStyle(color = Color.Black),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.Black,
+                                    unfocusedBorderColor = Color.Gray,
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
+                                    focusedLabelColor = Color.Black,
+                                    unfocusedLabelColor = Color.Black
+                                ),
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }

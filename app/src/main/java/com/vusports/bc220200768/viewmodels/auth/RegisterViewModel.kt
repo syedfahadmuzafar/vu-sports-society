@@ -40,6 +40,10 @@ class RegisterViewModel : ViewModel() {
     
     private val _existingCoachSports = MutableStateFlow<List<String>>(emptyList())
     val existingCoachSports: StateFlow<List<String>> = _existingCoachSports
+    
+    // Map to track categories with assigned coaches
+    private val _categoriesWithCoaches = MutableStateFlow<Map<String, String>>(emptyMap())
+    val categoriesWithCoaches: StateFlow<Map<String, String>> = _categoriesWithCoaches
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -93,15 +97,24 @@ class RegisterViewModel : ViewModel() {
             .get()
             .addOnSuccessListener { documents ->
                 val sports = mutableListOf<String>()
+                val categoryCoachMap = mutableMapOf<String, String>()
+                
                 for (document in documents) {
+                    val coachEmail = document.getString("email") ?: document.id
+                    val coachName = document.getString("name") ?: "Unknown Coach"
                     val expertise = document.get("expertise") as? List<*>
+                    
                     expertise?.forEach { sport ->
                         if (sport is String) {
-                            sports.add(sport.lowercase())
+                            val sportLowercase = sport.lowercase()
+                            sports.add(sportLowercase)
+                            categoryCoachMap[sportLowercase] = coachName
                         }
                     }
                 }
+                
                 _existingCoachSports.value = sports
+                _categoriesWithCoaches.value = categoryCoachMap
             }
     }
     
@@ -156,7 +169,20 @@ class RegisterViewModel : ViewModel() {
     
     // Check if a sport is disabled (for coaches only)
     fun isSportDisabled(sport: String): Boolean {
-        return _selectedRole.value == "Coach" && _existingCoachSports.value.contains(sport.lowercase())
+        // For coaches: disable if another coach is already assigned
+        if (_selectedRole.value == "Coach") {
+            return _existingCoachSports.value.contains(sport.lowercase())
+        }
+        // For participants: disable if no coach is assigned
+        else if (_selectedRole.value == "Participant") {
+            return !_categoriesWithCoaches.value.containsKey(sport.lowercase())
+        }
+        return false
+    }
+    
+    // Get coach name for a sport (if assigned)
+    fun getCoachForSport(sport: String): String? {
+        return _categoriesWithCoaches.value[sport.lowercase()]
     }
     
     // Helper function to standardize sports names

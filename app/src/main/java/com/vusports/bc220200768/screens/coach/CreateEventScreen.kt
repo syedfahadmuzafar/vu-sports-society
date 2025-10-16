@@ -54,22 +54,40 @@ fun CreateEventScreen(
             OutlinedTextField(
                 value = title,
                 onValueChange = { viewModel.title.value = it },
-                label = { Text("Event Title") },
-                modifier = Modifier.fillMaxWidth()
+                label = { Text("Event Title", color = Color.Black) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    focusedBorderColor = Color(0xFF00BFA6),
+                    unfocusedBorderColor = Color.Gray
+                )
             )
 
             OutlinedTextField(
                 value = description,
                 onValueChange = { viewModel.description.value = it },
-                label = { Text("Description") },
-                modifier = Modifier.fillMaxWidth()
+                label = { Text("Description", color = Color.Black) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    focusedBorderColor = Color(0xFF00BFA6),
+                    unfocusedBorderColor = Color.Gray
+                )
             )
 
             OutlinedTextField(
                 value = location,
                 onValueChange = { viewModel.location.value = it },
-                label = { Text("Location") },
-                modifier = Modifier.fillMaxWidth()
+                label = { Text("Location", color = Color.Black) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    focusedBorderColor = Color(0xFF00BFA6),
+                    unfocusedBorderColor = Color.Gray
+                )
             )
 
             Spacer(modifier = Modifier.height(16.dp))

@@ -27,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -34,6 +36,7 @@ import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.vusports.bc220200768.R
 import com.vusports.bc220200768.viewmodels.auth.RegisterViewModel
+import com.vusports.bc220200768.components.CommonTextField
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,80 +54,42 @@ fun RegisterScreen(
 
     val context = LocalContext.current
     var expandedRole by remember { mutableStateOf(false) }
-    var profileImageUri by remember { mutableStateOf<Uri?>(null) }
-
-    val imagePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
-        profileImageUri = it
-        it?.let { uri -> viewModel.setProfileImageUri(uri) }
-    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
-                .padding(16.dp)
+                .background(Color(0xFFF6F6F6))
+                .padding(horizontal = 24.dp, vertical = 16.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(40.dp))
+            
+            // App Logo
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "VU Logo",
+                modifier = Modifier
+                    .fillMaxWidth(0.5f)
+                    .padding(12.dp),
+                contentScale = ContentScale.Fit
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
                 text = "Create Account",
-                style = MaterialTheme.typography.headlineSmall,
+                style = TextStyle(fontSize = 26.sp, fontWeight = FontWeight.Bold),
                 color = Color(0xFF00BFA6)
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 🔷 Profile Image Picker
-            Box(
-                modifier = Modifier
-                    .size(110.dp)
-                    .clip(CircleShape)
-                    .background(Color.LightGray),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = if (profileImageUri != null)
-                        rememberAsyncImagePainter(profileImageUri)
-                    else
-                        painterResource(id = R.drawable.default_user1),
-                    contentDescription = "Profile Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(110.dp)
-                        .clip(CircleShape)
-                        .clickable { imagePickerLauncher.launch("image/*") }
-                )
-
-                // Camera Icon Overlay (Circular)
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .offset(x = 4.dp, y = 4.dp)
-                        .size(30.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                        .shadow(2.dp, CircleShape)
-                        .clickable { imagePickerLauncher.launch("image/*") },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Camera Icon",
-                        tint = Color(0xFF00BFA6),
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
             // 🔷 TextFields with validation
             // Name field with validation
             var nameError by remember { mutableStateOf("") }
-            OutlinedTextField(
+            CommonTextField(
                 value = name,
                 onValueChange = { 
                     if (it.isEmpty() || it.all { char -> char.isLetter() || char.isWhitespace() }) {
@@ -134,20 +99,10 @@ fun RegisterScreen(
                         nameError = "Name can only contain letters and spaces"
                     }
                 },
-                label = { Text("Name", color = Color.Black) },
+                label = "Name",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 6.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00BFA6),
-                    unfocusedBorderColor = Color.Gray,
-                    focusedLabelColor = Color.Black,
-                    unfocusedLabelColor = Color.Black,
-                    cursorColor = Color(0xFF00BFA6),
-                    errorBorderColor = Color.Red
-                ),
-                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 isError = nameError.isNotEmpty()
             )
             if (nameError.isNotEmpty()) {
@@ -161,7 +116,7 @@ fun RegisterScreen(
             
             // Email field with validation
             var emailError by remember { mutableStateOf("") }
-            OutlinedTextField(
+            CommonTextField(
                 value = email,
                 onValueChange = { 
                     viewModel.onEmailChange(it)
@@ -171,20 +126,10 @@ fun RegisterScreen(
                         ""
                     }
                 },
-                label = { Text("Email", color = Color.Black) },
+                label = "Email",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 6.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00BFA6),
-                    unfocusedBorderColor = Color.Gray,
-                    focusedLabelColor = Color.Black,
-                    unfocusedLabelColor = Color.Black,
-                    cursorColor = Color(0xFF00BFA6),
-                    errorBorderColor = Color.Red
-                ),
-                textStyle = LocalTextStyle.current.copy(color = Color.Black),
                 isError = emailError.isNotEmpty()
             )
             if (emailError.isNotEmpty()) {
@@ -197,22 +142,13 @@ fun RegisterScreen(
             }
             
             // Password field
-            OutlinedTextField(
+            CommonTextField(
                 value = password,
                 onValueChange = viewModel::onPasswordChange,
-                label = { Text("Password", color = Color.Black) },
+                label = "Password",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 6.dp),
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00BFA6),
-                    unfocusedBorderColor = Color.Gray,
-                    focusedLabelColor = Color.Black,
-                    unfocusedLabelColor = Color.Black,
-                    cursorColor = Color(0xFF00BFA6)
-                ),
-                textStyle = LocalTextStyle.current.copy(color = Color.Black)
+                    .padding(vertical = 6.dp)
             )
 
             // 🔷 Role Dropdown
@@ -297,11 +233,19 @@ fun RegisterScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(text = sport, color = if (isDisabled) Color.Gray else Color.Black)
                         if (isDisabled) {
-                            Text(
-                                text = "Coach already assigned",
-                                color = Color.Gray,
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                            if (selectedRole == "Participant") {
+                                Text(
+                                    text = "No coach assigned",
+                                    color = Color.Gray,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            } else {
+                                Text(
+                                    text = "Coach already assigned",
+                                    color = Color.Gray,
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
                         }
                     }
                     
@@ -319,7 +263,7 @@ fun RegisterScreen(
                             .width(100.dp)
                     ) {
                         Text(
-                            text = if (isSelected) "Selected" else "Select",
+                            text = if (isSelected) "✅" else "Select",
                             color = if (isSelected) Color.White else Color.Black
                         )
                     }
@@ -363,10 +307,6 @@ fun RegisterScreen(
                     }
                     
                     // All validations passed, proceed with registration
-                    if (profileImageUri == null) {
-                        Toast.makeText(context, "Please select a profile picture", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
                     
                     viewModel.registerUser(
                         onSuccess = { isApproved ->

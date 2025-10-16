@@ -179,35 +179,6 @@ fun ProfileScreen(navController: NavController) {
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(contentAlignment = Alignment.BottomEnd) {
-                    Image(
-                        painter = rememberAsyncImagePainter(userImage.ifEmpty {
-                            R.drawable.default_user
-                        }),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(90.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .clickable {
-                                val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                                launcher.launch(intent)
-                            },
-                        contentScale = ContentScale.Crop
-                    )
-                    Icon(
-                        imageVector = Icons.Rounded.CameraAlt,
-                        contentDescription = "Edit",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .offset(x = (-4).dp, y = (-4).dp)
-                            .size(24.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF00BFA6))
-                            .padding(4.dp)
-                    )
-                }
-
                 Spacer(Modifier.height(8.dp))
                 Text(userName, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Text(userEmail, fontSize = 14.sp, color = Color.White.copy(alpha = 0.8f))
@@ -362,6 +333,14 @@ fun ProfileScreen(navController: NavController) {
                             userRole == "participant" && !hasCoach -> true
                             else -> false
                         }
+                        
+                        // Get the reason why the sport is disabled
+                        val disabledReason = when {
+                            userRole == "coach" && existingCoachSports.contains(sport.lowercase()) && !isSelected -> "Coach already assigned"
+                            userRole == "participant" && !hasCoach -> "No coach assigned"
+                            userRole == "participant" && selectedSports.size >= 2 && !isSelected -> "Maximum 2 sports allowed"
+                            else -> ""
+                        }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(
@@ -402,14 +381,9 @@ fun ProfileScreen(navController: NavController) {
                                 color = if (isDisabled) Color.Gray else Color.Black
                             )
 
-                            if (userRole == "coach" && existingCoachSports.contains(sport.lowercase()) && !isSelected) {
+                            if (disabledReason.isNotEmpty()) {
                                 Spacer(Modifier.width(6.dp))
-                                Text("(Has coach)", color = Color.Gray, fontSize = 12.sp)
-                            }
-
-                            if (userRole == "participant" && !hasCoach) {
-                                Spacer(Modifier.width(6.dp))
-                                Text("(No coach)", color = Color.Gray, fontSize = 12.sp)
+                                Text("($disabledReason)", color = Color.Gray, fontSize = 12.sp)
                             }
                         }
                     }

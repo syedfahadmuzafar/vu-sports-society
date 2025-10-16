@@ -71,7 +71,13 @@ fun TeamManagementScreen(
                 label = { Text("Team Name", color = Color.Black) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(12.dp)),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    focusedBorderColor = Color(0xFF00BFA6),
+                    unfocusedBorderColor = Color.Gray
+                )
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -82,7 +88,13 @@ fun TeamManagementScreen(
                 label = { Text("Practice/Match Schedule", color = Color.Black) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(12.dp)),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    focusedBorderColor = Color(0xFF00BFA6),
+                    unfocusedBorderColor = Color.Gray
+                )
             )
 
             Spacer(modifier = Modifier.height(20.dp))

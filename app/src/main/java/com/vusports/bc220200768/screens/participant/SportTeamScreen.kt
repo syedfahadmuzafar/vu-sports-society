@@ -134,9 +134,14 @@ fun SportTeamScreen(
                                 OutlinedTextField(
                                     value = teamName,
                                     onValueChange = { viewModel.setTeamName(it) },
-                                    label = { Text("Enter Team Name") },
+                                    label = { Text("Enter Team Name", color = Color.Black) },
                                     modifier = Modifier.fillMaxWidth(),
-
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.Black,
+                                        unfocusedTextColor = Color.Black,
+                                        focusedBorderColor = Color(0xFF00BFA6),
+                                        unfocusedBorderColor = Color.Gray
+                                    )
                                 )
                             }
                         }

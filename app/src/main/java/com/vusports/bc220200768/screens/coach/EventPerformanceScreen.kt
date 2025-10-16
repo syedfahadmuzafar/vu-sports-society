@@ -169,9 +169,15 @@ fun ParticipantPerformanceCard(
                 OutlinedTextField(
                     value = score,
                     onValueChange = { score = it.filter { char -> char.isDigit() } },
-                    label = { Text("Score") },
+                    label = { Text("Score", color = Color.Black) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedBorderColor = Color(0xFF00BFA6),
+                        unfocusedBorderColor = Color.Gray
+                    )
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -179,9 +185,15 @@ fun ParticipantPerformanceCard(
                 OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
-                    label = { Text("Coach Notes") },
+                    label = { Text("Coach Notes", color = Color.Black) },
                     modifier = Modifier.fillMaxWidth(),
-                    minLines = 2
+                    minLines = 2,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedBorderColor = Color(0xFF00BFA6),
+                        unfocusedBorderColor = Color.Gray
+                    )
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
