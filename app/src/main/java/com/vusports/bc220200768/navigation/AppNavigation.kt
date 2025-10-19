@@ -16,6 +16,7 @@ import com.vusports.bc220200768.screens.admin.ModifyProfilesScreen
 import com.vusports.bc220200768.screens.admin.NotificationsScreen
 import com.vusports.bc220200768.screens.admin.ScheduleEventScreen
 import com.vusports.bc220200768.screens.admin.ViewReportsScreen
+import com.vusports.bc220200768.screens.auth.ForgotPasswordScreen
 import com.vusports.bc220200768.screens.auth.LoginScreen
 import com.vusports.bc220200768.screens.coach.ApproveParticipantsScreen
 import com.vusports.bc220200768.screens.coach.CoachDashboardScreen
@@ -46,6 +47,7 @@ fun AppNavigation(navController: NavHostController) {
         composable("teamManagement") { TeamManagementScreen(navController) }
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController) }
+        composable("forgot_password") { ForgotPasswordScreen(navController) }
 
         composable("create_event") {
             val currentUserEmail = FirebaseAuth.getInstance().currentUser?.email ?: ""

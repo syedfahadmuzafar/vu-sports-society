@@ -282,7 +282,7 @@ fun LoginScreen(navController: NavController) {
                     fontSize = 14.sp,
                     color = Color(0xFF00BFA6),
                     modifier = Modifier.clickable {
-                        // TODO: Forgot password functionality
+                        navController.navigate("forgot_password")
                     }
                 )
             }

@@ -68,7 +68,11 @@ fun SportTeamScreen(
             )
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF5F5F5))
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()

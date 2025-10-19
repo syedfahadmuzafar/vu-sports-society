@@ -1,6 +1,7 @@
 package com.vusports.bc220200768.screens.participant
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -23,6 +24,7 @@ data class Event(
     val timing: String = ""
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventRegistrationScreen(
     viewModel: EventRegistrationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
@@ -32,55 +34,85 @@ fun EventRegistrationScreen(
     val registeredEvents by viewModel.registeredEvents.collectAsState()
     val loading by viewModel.loading.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Register for Event", style = MaterialTheme.typography.headlineSmall)
-            Spacer(modifier = Modifier.height(16.dp))
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        "Available Events",
+                        color = androidx.compose.ui.graphics.Color.White
+                    )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = androidx.compose.ui.graphics.Color(0xFF00BFA6)
+                )
+            )
+        }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(androidx.compose.ui.graphics.Color(0xFFF5F5F5)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "Register for Event",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = androidx.compose.ui.graphics.Color(0xFF00BFA6)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
 
-            if (loading) {
-                CircularProgressIndicator()
-            } else {
-                events.forEach { event ->
-                    val alreadyRegistered = registeredEvents.contains(event.name)
+                if (loading) {
+                    CircularProgressIndicator(color = androidx.compose.ui.graphics.Color(0xFF00BFA6))
+                } else {
+                    events.forEach { event ->
+                        val alreadyRegistered = registeredEvents.contains(event.name)
 
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                            .shadow(4.dp, RoundedCornerShape(12.dp)),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Column(
+                        Card(
                             modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth(),
-                            horizontalAlignment = Alignment.Start
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            colors = CardDefaults.cardColors(containerColor = androidx.compose.ui.graphics.Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("🏟️ ${event.name}", style = MaterialTheme.typography.titleMedium)
-                            Text("📍 Venue: ${event.venue}")
-                            Text("🕒 Time: ${event.timing}")
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Button(
-                                onClick = {
-                                    viewModel.registerEvent(event) { success, message ->
-                                        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                                    }
-                                },
-                                enabled = !alreadyRegistered
+                            Column(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                horizontalAlignment = Alignment.Start
                             ) {
-                                Text(if (alreadyRegistered) "Registered" else "Register")
+                                Text(
+                                    "🏟️ ${event.name}",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text("📍 Venue: ${event.venue}")
+                                Text("🕒 Time: ${event.timing}")
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Button(
+                                    onClick = {
+                                        viewModel.registerEvent(event) { success, message ->
+                                            Toast.makeText(context, message, Toast.LENGTH_SHORT)
+                                                .show()
+                                        }
+                                    },
+                                    enabled = !alreadyRegistered
+                                ) {
+                                    Text(if (alreadyRegistered) "Registered" else "Register")
+                                }
                             }
                         }
                     }
-                }
 
-                if (registeredEvents.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Text("🎉 Registered Events:", style = MaterialTheme.typography.titleMedium)
-                    registeredEvents.forEach {
-                        Text("• $it", style = MaterialTheme.typography.bodyMedium)
+                    if (registeredEvents.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(24.dp))
+                        Text("🎉 Registered Events:", style = MaterialTheme.typography.titleMedium)
+                        registeredEvents.forEach {
+                            Text("• $it", style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
                 }
             }

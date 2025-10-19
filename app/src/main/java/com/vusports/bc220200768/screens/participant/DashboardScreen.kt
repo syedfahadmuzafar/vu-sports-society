@@ -99,7 +99,7 @@ fun DashboardScreen(navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF6F6F6))
+                .background(Color(0xFFF5F5F5))
                 .padding(padding)
         ) {
             LazyVerticalGrid(

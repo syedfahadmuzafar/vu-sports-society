@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import LoadingOverlay
+import androidx.compose.foundation.background
 import com.vusports.bc220200768.screens.leaderboard.LeaderboardViewModel
 import com.vusports.bc220200768.screens.leaderboard.LeaderboardEntry
 
@@ -40,14 +41,18 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel = viewModel()) {
             )
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(Color(0xFFF5F5F5))
+        ) {
             if (isLoading) {
                 LoadingOverlay()
             } else if (leaderboard.isEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(padding)
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
@@ -55,7 +60,8 @@ fun LeaderboardScreen(viewModel: LeaderboardViewModel = viewModel()) {
                     Text(
                         "No leaderboard entries found",
                         style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        color = Color(0xFF00BFA6)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Button(
