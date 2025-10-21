@@ -37,29 +37,50 @@ class JoinOrCreateTeamViewModel : ViewModel() {
             .get()
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
-                    // Join team
-                    db.collection("teams").document(name)
-                        .update("members", FieldValue.arrayUnion(userEmail))
-                        .addOnSuccessListener {
-                            _feedback.value = "Successfully joined team '$name'!"
-                            _loading.value = false
-                        }
-                        .addOnFailureListener {
-                            _feedback.value = "Failed to join team."
-                            _loading.value = false
-                        }
+                    // Join team - create a join request that needs approval
+                    db.collection("team_join_requests").add(
+                        mapOf(
+                            "teamName" to name,
+                            "requesterEmail" to userEmail,
+                            "status" to "pending",
+                            "timestamp" to System.currentTimeMillis()
+                        )
+                    )
+                    .addOnSuccessListener {
+                        _feedback.value = "Join request sent for team '$name'! Waiting for approval."
+                        _loading.value = false
+                    }
+                    .addOnFailureListener {
+                        _feedback.value = "Failed to send join request."
+                        _loading.value = false
+                    }
                 } else {
-                    // Create team
+                    // Create team with creator as team leader and pending coach approval
+                    // Create team members list with approval status
+                    val teamMembers = mutableListOf<Map<String, Any>>()
+                    
+                    // Add creator as team leader (auto-approved)
+                    teamMembers.add(mapOf(
+                        "email" to userEmail,
+                        "status" to "approved",
+                        "isTeamLeader" to true,
+                        "timestamp" to System.currentTimeMillis()
+                    ))
+                    
                     db.collection("teams").document(name)
                         .set(
                             mapOf(
-                                "members" to listOf(userEmail),
+                                "name" to name,
+                                "members" to teamMembers,
+                                "memberEmails" to listOf(userEmail),
                                 "creator" to userEmail,
+                                "coachApproved" to false,
+                                "status" to "pending", // Teams need coach approval
                                 "timestamp" to System.currentTimeMillis()
                             )
                         )
                         .addOnSuccessListener {
-                            _feedback.value = "Team '$name' created successfully!"
+                            _feedback.value = "Team '$name' created successfully! You are assigned as team leader. Waiting for coach approval."
                             _loading.value = false
                         }
                         .addOnFailureListener {

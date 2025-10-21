@@ -95,6 +95,10 @@ fun AppNavigation(navController: NavHostController) {
         composable("organize_events") {
             OrganizeEventScreen(navController)
         }
+        
+        composable("teamApproval") {
+            com.vusports.bc220200768.screens.coach.TeamApprovalScreen(navController)
+        }
 
 
 

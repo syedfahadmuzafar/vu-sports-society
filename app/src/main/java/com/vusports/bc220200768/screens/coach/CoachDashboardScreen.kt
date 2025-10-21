@@ -53,6 +53,7 @@ fun CoachDashboardScreen(navController: NavController) {
     val dashboardItems = listOf(
         DashboardItem("Edit Profile", "Update your profile", Icons.Default.Person) { navController.navigate("profile") },
         DashboardItem("Manage Teams", "Assign & view teams", Icons.Default.Groups) { navController.navigate("teamManagement") },
+        DashboardItem("Approve Teams", "Review team requests", Icons.Default.CheckCircle) { navController.navigate("teamApproval") },
         DashboardItem("Organize Events", "Manage admin events", Icons.Default.EventAvailable) { navController.navigate("organize_events") },
         DashboardItem("Team Chat / Feedback", "Interact with team", Icons.Default.Chat) { navController.navigate("chat_selector/$email") },
         DashboardItem("Approve Participants", "Approve pending users", Icons.Default.CheckCircle) {

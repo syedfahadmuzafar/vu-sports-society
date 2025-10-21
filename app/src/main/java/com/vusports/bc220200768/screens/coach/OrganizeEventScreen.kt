@@ -2,6 +2,7 @@ package com.vusports.bc220200768.screens.coach
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +24,7 @@ import androidx.navigation.NavController
 import com.vusports.bc220200768.viewmodels.coach.AdminEvent
 import com.vusports.bc220200768.viewmodels.coach.OrganizeEventViewModel
 import com.vusports.bc220200768.viewmodels.coach.Participant
+import com.vusports.bc220200768.viewmodels.coach.TeamMember
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,21 +41,22 @@ fun OrganizeEventScreen(
     val teamLineup by viewModel.teamLineup.collectAsState()
     val availableParticipants by viewModel.availableParticipants.collectAsState()
     val categoryRoles by viewModel.categoryRoles.collectAsState()
-    
+    val availableTeams by viewModel.availableTeams.collectAsState()
+
     var showResultsDialog by remember { mutableStateOf(false) }
     var currentResults by remember { mutableStateOf(mapOf<String, String>()) }
-    
+
     LaunchedEffect(Unit) {
         viewModel.loadEvents()
     }
-    
+
     LaunchedEffect(message) {
         message?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             viewModel.clearMessage()
         }
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -98,7 +102,7 @@ fun OrganizeEventScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
-                        
+
                         if (availableEvents.isEmpty()) {
                             item {
                                 Card(
@@ -121,7 +125,7 @@ fun OrganizeEventScreen(
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
-                        
+
                         item {
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
@@ -132,7 +136,7 @@ fun OrganizeEventScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
-                        
+
                         if (organizedEvents.isEmpty()) {
                             item {
                                 Card(
@@ -177,9 +181,73 @@ fun OrganizeEventScreen(
                                     Text("Date: ${selectedEvent?.date}")
                                     Text("Venue: ${selectedEvent?.venue}")
                                     Text("Category: ${selectedEvent?.category}")
-                                    
+
                                     Spacer(modifier = Modifier.height(16.dp))
-                                    
+
+                                    // Team selection section
+                                    Text(
+                                        "Select Teams",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF00BFA6)
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    if (availableTeams.isEmpty()) {
+                                        Text(
+                                            "No teams available",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.Gray
+                                        )
+                                    } else {
+                                        availableTeams.forEach { team ->
+                                            Card(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(vertical = 4.dp)
+                                                    .clickable { viewModel.toggleTeamSelection(team.id) },
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = if (viewModel.isTeamSelected(team.id))
+                                                        Color(0xFFE0F7F5) else Color.White
+                                                )
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Checkbox(
+                                                        checked = viewModel.isTeamSelected(team.id),
+                                                        onCheckedChange = { viewModel.toggleTeamSelection(team.id) },
+                                                        colors = CheckboxDefaults.colors(
+                                                            checkedColor = Color(0xFF00BFA6)
+                                                        )
+                                                    )
+                                                    Column(
+                                                        modifier = Modifier.padding(start = 8.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = team.name,
+                                                            style = MaterialTheme.typography.bodyMedium,
+                                                            fontWeight = FontWeight.Bold
+                                                        )
+                                                        if (team.category.isNotEmpty()) {
+                                                            Text(
+                                                                text = "Category: ${team.category}",
+                                                                style = MaterialTheme.typography.bodySmall,
+                                                                color = Color.Gray
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.height(16.dp))
+
                                     Button(
                                         onClick = { viewModel.organizeEvent() },
                                         colors = ButtonDefaults.buttonColors(
@@ -189,9 +257,9 @@ fun OrganizeEventScreen(
                                     ) {
                                         Text("Save Team Lineup")
                                     }
-                                    
+
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    
+
                                     Button(
                                         onClick = { viewModel.selectEvent(null) },
                                         colors = ButtonDefaults.buttonColors(
@@ -203,26 +271,78 @@ fun OrganizeEventScreen(
                                     }
                                 }
                             }
-                            
+
                             Spacer(modifier = Modifier.height(16.dp))
                         }
-                        
+
+                        // Show team members and their roles if a team is selected
+                        item {
+                            val selectedTeams = viewModel.selectedTeams.collectAsState().value
+                            val teamMembers = viewModel.teamMembers.collectAsState().value
+                            val teamMemberRoles = viewModel.teamMemberRoles.collectAsState().value
+                            
+                            if (selectedTeams.isNotEmpty()) {
+                                Column {
+                                    Text(
+                                        "Team Member Roles",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF00BFA6)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    
+                                    val selectedTeamId = selectedTeams.firstOrNull()
+                                    if (selectedTeamId != null) {
+                                        val membersForTeam = teamMembers[selectedTeamId] ?: emptyList()
+                                        
+                                        if (membersForTeam.isEmpty()) {
+                                            Text(
+                                                "No team members found for the selected team",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.Black
+                                            )
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                        } else {
+                                            membersForTeam.forEach { member ->
+                                                TeamMemberRoleCard(
+                                                    member = member,
+                                                    currentRole = viewModel.getTeamMemberRole(selectedTeamId, member.email),
+                                                    availableRoles = categoryRoles,
+                                                    onAssignRole = { role ->
+                                                        viewModel.assignRoleToTeamMember(selectedTeamId, member.email, role)
+                                                    }
+                                                )
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                            }
+                                        }
+                                    }
+                                    
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(vertical = 16.dp),
+                                        thickness = DividerDefaults.Thickness,
+                                        color = DividerDefaults.color
+                                    )
+                                }
+                            }
+                        }
+
                         // Show roles and participants
                         item {
                             Text(
                                 "Assign Roles",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                         }
-                        
+
                         if (categoryRoles.isEmpty()) {
                             item {
                                 Text(
                                     "No roles defined for this category",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Gray
+                                    color = Color.Black
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
@@ -247,7 +367,7 @@ fun OrganizeEventScreen(
             }
         }
     }
-    
+
     if (showResultsDialog) {
         ResultsDialog(
             onDismiss = { showResultsDialog = false },
@@ -256,6 +376,150 @@ fun OrganizeEventScreen(
                 showResultsDialog = false
             }
         )
+    }
+}
+
+@Composable
+fun TeamMemberRoleCard(
+    member: TeamMember,
+    currentRole: String,
+    availableRoles: List<String>,
+    onAssignRole: (String) -> Unit
+) {
+    var roleText by remember { mutableStateOf(currentRole) }
+    var showSuggestions by remember { mutableStateOf(false) }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (currentRole.isNotEmpty()) Color(0xFFE0F7F5) else Color.White
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = member.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = member.email,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Column {
+                Text(
+                    text = "Role Assignment:",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = roleText,
+                        onValueChange = {
+                            roleText = it
+                            showSuggestions = true
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp),
+                        label = { Text("Enter role", color = Color.Black) },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFF00BFA6),
+                            unfocusedBorderColor = Color.Black,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            cursorColor = Color.Black,
+                            focusedLabelColor = Color.Black,
+                            unfocusedLabelColor = Color.Black
+                        )
+                    )
+
+
+                    Button(
+                        onClick = { 
+                            if (roleText.isNotEmpty()) {
+                                onAssignRole(roleText)
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF00BFA6)
+                        )
+                    ) {
+                        Text("Assign")
+                    }
+                }
+                
+                // Show role suggestions
+                if (showSuggestions && availableRoles.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color.White
+                        ),
+                        elevation = CardDefaults.cardElevation(4.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(8.dp)) {
+                            availableRoles
+                                .filter { it.contains(roleText, ignoreCase = true) || roleText.isEmpty() }
+                                .take(5)
+                                .forEach { role ->
+                                    Text(
+                                        text = role,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                roleText = role
+                                                showSuggestions = false
+                                                onAssignRole(role)
+                                            }
+                                            .padding(vertical = 8.dp, horizontal = 16.dp),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                        }
+                    }
+                }
+            }
+
+            if (currentRole.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Current Role: ",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = currentRole,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF00BFA6)
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -304,9 +568,9 @@ fun OrganizedEventCard(event: AdminEvent, onSubmitResults: () -> Unit) {
             Text("Date: ${event.date}")
             Text("Venue: ${event.venue}")
             Text("Category: ${event.category}")
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Button(
                 onClick = onSubmitResults,
                 colors = ButtonDefaults.buttonColors(
@@ -330,7 +594,7 @@ fun RoleCard(
     onRemoveParticipant: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -343,9 +607,9 @@ fun RoleCard(
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             // Show assigned participants
             if (assignedParticipants.isNotEmpty()) {
                 Text(
@@ -353,7 +617,7 @@ fun RoleCard(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
-                
+
                 assignedParticipants.forEach { email ->
                     val participant = availableParticipants.find { it.email == email }
                     Row(
@@ -376,7 +640,7 @@ fun RoleCard(
                     }
                 }
             }
-            
+
             // Dropdown to add participants
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -397,7 +661,7 @@ fun RoleCard(
                         .menuAnchor()
                         .fillMaxWidth()
                 )
-                
+
                 ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
@@ -429,7 +693,7 @@ fun ResultsDialog(
     var score by remember { mutableStateOf("") }
     var performance by remember { mutableStateOf("") }
     var highlights by remember { mutableStateOf("") }
-    
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Submit Match Results") },
@@ -441,18 +705,18 @@ fun ResultsDialog(
                     label = { Text("Final Score") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 OutlinedTextField(
                     value = performance,
                     onValueChange = { performance = it },
                     label = { Text("Team Performance") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                
+
                 Spacer(modifier = Modifier.height(8.dp))
-                
+
                 OutlinedTextField(
                     value = highlights,
                     onValueChange = { highlights = it },

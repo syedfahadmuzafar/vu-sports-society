@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class OrganizeEventViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
@@ -34,11 +35,27 @@ class OrganizeEventViewModel : ViewModel() {
     private val _availableParticipants = MutableStateFlow<List<Participant>>(emptyList())
     val availableParticipants: StateFlow<List<Participant>> = _availableParticipants.asStateFlow()
     
+    private val _selectedParticipants = MutableStateFlow<List<String>>(emptyList())
+    val selectedParticipants: StateFlow<List<String>> = _selectedParticipants
+    
+    private val _selectedTeams = MutableStateFlow<List<String>>(emptyList())
+    val selectedTeams: StateFlow<List<String>> = _selectedTeams.asStateFlow()
+    
+    private val _availableTeams = MutableStateFlow<List<TeamInfo>>(emptyList())
+    val availableTeams: StateFlow<List<TeamInfo>> = _availableTeams.asStateFlow()
+    
     private val _categoryRoles = MutableStateFlow<List<String>>(emptyList())
     val categoryRoles: StateFlow<List<String>> = _categoryRoles.asStateFlow()
     
+    private val _teamMembers = MutableStateFlow<Map<String, List<TeamMember>>>(emptyMap())
+    val teamMembers: StateFlow<Map<String, List<TeamMember>>> = _teamMembers.asStateFlow()
+    
+    private val _teamMemberRoles = MutableStateFlow<Map<String, Map<String, String>>>(emptyMap())
+    val teamMemberRoles: StateFlow<Map<String, Map<String, String>>> = _teamMemberRoles.asStateFlow()
+    
     init {
         loadEvents()
+        loadTeams()
     }
     
     fun loadEvents() {
@@ -90,6 +107,9 @@ class OrganizeEventViewModel : ViewModel() {
                                     .get()
                                     .addOnSuccessListener { organizedDocs ->
                                         val organizedEvents = organizedDocs.documents.mapNotNull { doc ->
+                                            val teams = doc.get("teams") as? List<String> ?: emptyList()
+                                            val selectedParticipants = doc.get("selectedParticipants") as? List<String> ?: emptyList()
+                                            
                                             AdminEvent(
                                                 id = doc.id,
                                                 name = doc.getString("name") ?: "",
@@ -98,7 +118,9 @@ class OrganizeEventViewModel : ViewModel() {
                                                 date = doc.getString("date") ?: "",
                                                 category = doc.getString("category")?.lowercase() ?: "",
                                                 coachOrganized = doc.getBoolean("coachOrganized") ?: false,
-                                                organizingCoach = doc.getString("organizingCoach") ?: ""
+                                                organizingCoach = doc.getString("organizingCoach") ?: "",
+                                                selectedParticipants = selectedParticipants,
+                                                teams = teams
                                             )
                                         }
                                         _organizedEvents.value = organizedEvents
@@ -167,18 +189,224 @@ class OrganizeEventViewModel : ViewModel() {
             }
     }
     
+    fun toggleParticipantSelection(participant: Participant) {
+        val currentList = _selectedParticipants.value.toMutableList()
+        if (currentList.contains(participant.email)) {
+            currentList.remove(participant.email)
+        } else {
+            currentList.add(participant.email)
+        }
+        _selectedParticipants.value = currentList
+    }
+    
+    fun isParticipantSelected(email: String): Boolean {
+        return _selectedParticipants.value.contains(email)
+    }
+    
+    fun loadTeams() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val coachEmail = auth.currentUser?.email ?: return@launch
+                
+                // Get coach expertise
+                val coachDoc = firestore.collection("users").document(coachEmail).get().await()
+                val expertise = when (val exp = coachDoc.get("expertise")) {
+                    is String -> listOf(exp.lowercase())
+                    is List<*> -> exp.filterIsInstance<String>().map { it.lowercase() }
+                    else -> emptyList()
+                }
+                
+                // Get the current event category for filtering
+                val eventCategory = _selectedEvent.value?.category?.lowercase()
+                
+                // Get all teams where this coach is the creator or assigned coach
+                val snapshot = firestore.collection("teams")
+                    .get()
+                    .await()
+                
+                val teamsList = snapshot.documents.mapNotNull { doc ->
+                    val teamId = doc.id
+                    val teamName = doc.getString("name") ?: doc.getString("teamName") ?: return@mapNotNull null
+                    val teamCoach = doc.getString("coach") ?: ""
+                    val teamCreator = doc.getString("creator") ?: ""
+                    val coachApproved = doc.getBoolean("coachApproved") ?: false
+                    val status = doc.getString("status") ?: ""
+                    val teamCategory = doc.getString("category")?.lowercase() ?: doc.getString("sport")?.lowercase() ?: ""
+                    
+                    // Filter by category if event is selected
+                    val categoryMatches = if (eventCategory != null && eventCategory.isNotEmpty()) {
+                        // Strict matching when event is selected
+                        teamCategory == eventCategory
+                    } else {
+                        // When no event selected or filtering by coach expertise
+                        expertise.isEmpty() || expertise.contains(teamCategory)
+                    }
+                    
+                    // Include team if:
+                    // 1. Coach is the assigned coach, or
+                    // 2. Coach is the creator, or
+                    // 3. Team is approved by any coach
+                    // AND team category matches event category or coach expertise
+                    if ((teamCoach == coachEmail || 
+                        teamCreator == coachEmail || 
+                        (coachApproved && status == "approved")) && categoryMatches) {
+                        TeamInfo(
+                            id = teamId,
+                            name = teamName,
+                            category = teamCategory
+                        )
+                    } else null
+                }
+                
+                _availableTeams.value = teamsList
+                
+                if (teamsList.isEmpty()) {
+                    if (eventCategory != null && eventCategory.isNotEmpty()) {
+                        _message.value = "No teams available for category: $eventCategory"
+                    } else {
+                        _message.value = "No teams available. Please create or approve teams first."
+                    }
+                }
+            } catch (e: Exception) {
+                _message.value = "Error loading teams: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
+    fun toggleTeamSelection(teamId: String) {
+        val currentSelection = _selectedTeams.value.toMutableList()
+        if (currentSelection.contains(teamId)) {
+            currentSelection.remove(teamId)
+        } else {
+            currentSelection.add(teamId)
+            // Load team members when a team is selected
+            loadTeamMembers(teamId)
+        }
+        _selectedTeams.value = currentSelection
+    }
+    
+    private fun loadTeamMembers(teamId: String) {
+        viewModelScope.launch {
+            try {
+                val teamDoc = firestore.collection("teams").document(teamId).get().await()
+                
+                // Get members data
+                val members = teamDoc.get("members") as? List<Map<String, Any>> ?: emptyList()
+                val memberEmails = teamDoc.get("memberEmails") as? List<String> ?: emptyList()
+                
+                // Convert to TeamMember objects
+                val teamMembersList = members.mapNotNull { memberMap ->
+                    val email = memberMap["email"] as? String ?: return@mapNotNull null
+                    val name = memberMap["name"] as? String ?: ""
+                    val status = memberMap["status"] as? String ?: "pending"
+                    
+                    // Check if role is already assigned in the database
+                    val existingRole = memberMap["role"] as? String ?: ""
+                    
+                    TeamMember(
+                        email = email,
+                        name = name,
+                        status = status,
+                        role = existingRole
+                    )
+                }
+                
+                // Update the team members state
+                val currentTeamMembers = _teamMembers.value.toMutableMap()
+                currentTeamMembers[teamId] = teamMembersList
+                _teamMembers.value = currentTeamMembers
+                
+                // Initialize roles map for this team if not already present
+                if (!_teamMemberRoles.value.containsKey(teamId)) {
+                    val currentRoles = _teamMemberRoles.value.toMutableMap()
+                    val memberRoles = teamMembersList
+                        .filter { it.role.isNotEmpty() }
+                        .associate { it.email to it.role }
+                        .toMutableMap()
+                    
+                    currentRoles[teamId] = memberRoles
+                    _teamMemberRoles.value = currentRoles
+                }
+                
+            } catch (e: Exception) {
+                _message.value = "Error loading team members: ${e.message}"
+            }
+        }
+    }
+    
+    fun isTeamSelected(teamId: String): Boolean {
+        return _selectedTeams.value.contains(teamId)
+    }
+    
+    fun assignRoleToTeamMember(teamId: String, memberEmail: String, role: String) {
+        // Update the role in our local state
+        val currentRoles = _teamMemberRoles.value.toMutableMap()
+        val teamRoles = currentRoles[teamId]?.toMutableMap() ?: mutableMapOf()
+        teamRoles[memberEmail] = role
+        currentRoles[teamId] = teamRoles
+        _teamMemberRoles.value = currentRoles
+        
+        // Update the role in Firestore
+        viewModelScope.launch {
+            try {
+                val teamDoc = firestore.collection("teams").document(teamId).get().await()
+                val members = teamDoc.get("members") as? List<Map<String, Any>> ?: return@launch
+                
+                // Find the member and update their role
+                val updatedMembers = members.map { memberMap ->
+                    val email = memberMap["email"] as? String
+                    if (email == memberEmail) {
+                        // Update this member's role
+                        memberMap.toMutableMap().apply { 
+                            put("role", role)
+                        }
+                    } else {
+                        memberMap
+                    }
+                }
+                
+                // Update the team document
+                firestore.collection("teams").document(teamId)
+                    .update("members", updatedMembers)
+                    .addOnSuccessListener {
+                        _message.value = "Role assigned successfully"
+                    }
+                    .addOnFailureListener { e ->
+                        _message.value = "Failed to assign role: ${e.message}"
+                    }
+                
+            } catch (e: Exception) {
+                _message.value = "Error assigning role: ${e.message}"
+            }
+        }
+    }
+    
     fun organizeEvent() {
         val event = _selectedEvent.value ?: return
         val coachEmail = auth.currentUser?.email ?: return
         
+        if (_selectedParticipants.value.isEmpty() && _selectedTeams.value.isEmpty()) {
+            _message.value = "Please select at least one participant or team"
+            return
+        }
+        
         _isLoading.value = true
+        
+        // Include team member roles in the event data
+        val teamRolesData = _teamMemberRoles.value
         
         firestore.collection("events").document(event.id)
             .update(
                 mapOf(
                     "coachOrganized" to true,
                     "organizingCoach" to coachEmail,
-                    "teamLineup" to _teamLineup.value
+                    "teamLineup" to _teamLineup.value,
+                    "selectedParticipants" to _selectedParticipants.value,
+                    "teams" to _selectedTeams.value,
+                    "teamMemberRoles" to teamRolesData
                 )
             )
             .addOnSuccessListener {
@@ -190,6 +418,14 @@ class OrganizeEventViewModel : ViewModel() {
                 _message.value = "Failed to organize event: ${it.message}"
                 _isLoading.value = false
             }
+    }
+    
+    fun getTeamMemberRole(teamId: String, memberEmail: String): String {
+        return _teamMemberRoles.value[teamId]?.get(memberEmail) ?: ""
+    }
+    
+    fun hasAssignedRoles(teamId: String): Boolean {
+        return _teamMemberRoles.value[teamId]?.isNotEmpty() == true
     }
     
     fun assignParticipantToRole(participant: Participant, role: String) {
@@ -254,11 +490,26 @@ data class AdminEvent(
     val date: String = "",
     val category: String = "",
     val coachOrganized: Boolean = false,
-    val organizingCoach: String = ""
+    val organizingCoach: String = "",
+    val selectedParticipants: List<String> = emptyList(),
+    val teams: List<String> = emptyList()
 )
 
 data class Participant(
     val email: String = "",
     val name: String = "",
     val sports: String = ""
+)
+
+data class TeamInfo(
+    val id: String = "",
+    val name: String = "",
+    val category: String = ""
+)
+
+data class TeamMember(
+    val email: String = "",
+    val name: String = "",
+    val status: String = "",
+    val role: String = ""
 )
