@@ -44,6 +44,8 @@ class JoinedEventsViewModel : ViewModel() {
                     val eventId = doc.getString("eventId") ?: continue
                     val eventDoc = db.collection("events").document(eventId).get().await()
                     val data = eventDoc.data ?: continue
+                    val status = data["approvalStatus"] as? String ?: "approved"
+                    if (status != "approved") continue
 
                     val event = JoinedEvent(
                         id = eventId,

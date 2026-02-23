@@ -177,7 +177,7 @@ fun ChatScreen(
                         Icon(
                             imageVector = Icons.Default.Face,
                             contentDescription = "Emoji",
-                            tint = Color.Gray
+                            tint = Color.Black
                         )
                     }
                     
@@ -197,8 +197,8 @@ fun ChatScreen(
                             focusedBorderColor = Color.Transparent,
                             focusedTextColor = Color.Black,
                             unfocusedTextColor = Color.Black,
-                            focusedPlaceholderColor = Color.Gray,
-                            unfocusedPlaceholderColor = Color.Gray
+                            focusedPlaceholderColor = Color.Black,
+                            unfocusedPlaceholderColor = Color.Black
                         ),
                         shape = RoundedCornerShape(24.dp),
                         singleLine = true

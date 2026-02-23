@@ -401,7 +401,12 @@ fun ScheduleEventScreen(
                                 items(events) { event ->
                                     EventCard(
                                         event = event,
-                                        onDelete = { viewModel.deleteEvent(event.id) }
+                                        onDelete = { viewModel.deleteEvent(event.id) },
+                                        onApproveCoachEvent = {
+                                            if (event.createdByRole == "coach" && event.approvalStatus == "pending") {
+                                                viewModel.approveCoachEvent(event.id)
+                                            }
+                                        }
                                     )
                                 }
                             }
@@ -429,7 +434,8 @@ fun ScheduleEventScreen(
 @Composable
 fun EventCard(
     event: ScheduleEventViewModel.EventData,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onApproveCoachEvent: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -463,12 +469,19 @@ fun EventCard(
                 }
             }
             
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Status: ${event.approvalStatus}",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (event.approvalStatus == "approved") Color(0xFF00BFA6) else Color(0xFFFFA000)
+            )
+            
             Divider(modifier = Modifier.padding(vertical = 8.dp))
             
             Text(
                 text = "Category",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = Color.Black
             )
             Text(
                 text = event.category,
@@ -487,7 +500,7 @@ fun EventCard(
                     Text(
                         text = "Date",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = Color.Black
                     )
                     Text(
                         text = event.date,
@@ -499,7 +512,7 @@ fun EventCard(
                     Text(
                         text = "Time",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = Color.Black
                     )
                     Text(
                         text = event.timing,
@@ -513,7 +526,7 @@ fun EventCard(
             Text(
                 text = "Venue",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = Color.Black
             )
             Text(
                 text = event.venue,
@@ -525,7 +538,7 @@ fun EventCard(
                 Text(
                     text = "Equipment",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color.Black
                 )
                 Text(
                     text = event.equipment,
@@ -538,7 +551,7 @@ fun EventCard(
                 Text(
                     text = "Staff Required",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color.Black
                 )
                 Text(
                     text = event.staffRequired,
@@ -551,12 +564,26 @@ fun EventCard(
                 Text(
                     text = "Logistics Notes",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color.Black
                 )
                 Text(
                     text = event.logistics,
                     style = MaterialTheme.typography.bodyMedium
                 )
+            }
+            
+            if (event.createdByRole == "coach" && event.approvalStatus == "pending") {
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = onApproveCoachEvent,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF00BFA6),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("Approve Coach Event")
+                }
             }
         }
     }

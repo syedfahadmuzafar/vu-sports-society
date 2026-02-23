@@ -27,7 +27,10 @@ fun EventScreen(navController: NavController) {
     LaunchedEffect(true) {
         val result = db.collection("events").get().await()
         events = result.documents.mapNotNull { doc ->
-            doc.data?.plus("id" to doc.id)
+            val status = doc.getString("approvalStatus") ?: "approved"
+            if (status == "approved") {
+                doc.data?.plus("id" to doc.id)
+            } else null
         }
     }
 

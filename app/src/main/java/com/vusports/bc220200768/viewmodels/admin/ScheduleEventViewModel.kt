@@ -122,6 +122,8 @@ class ScheduleEventViewModel : ViewModel() {
                     val maxParticipants = doc.getString("maxParticipants") ?: "-"
                     val logistics = doc.getString("logistics") ?: "-"
                     val category = doc.getString("category") ?: "-"
+                    val createdByRole = doc.getString("createdByRole") ?: ""
+                    val approvalStatus = doc.getString("approvalStatus") ?: "approved"
                     
                     // Get assigned coaches
                     val assignedCoaches = try {
@@ -130,7 +132,21 @@ class ScheduleEventViewModel : ViewModel() {
                         emptyList()
                     }
                     
-                    EventData(id, name, venue, timing, date, equipment, staffRequired, maxParticipants, logistics, category, assignedCoaches)
+                    EventData(
+                        id = id,
+                        name = name,
+                        venue = venue,
+                        timing = timing,
+                        date = date,
+                        equipment = equipment,
+                        staffRequired = staffRequired,
+                        maxParticipants = maxParticipants,
+                        logistics = logistics,
+                        category = category,
+                        assignedCoaches = assignedCoaches,
+                        createdByRole = createdByRole,
+                        approvalStatus = approvalStatus
+                    )
                 }
                 _events.value = eventsList
                 _isLoading.value = false
@@ -159,6 +175,8 @@ class ScheduleEventViewModel : ViewModel() {
             "category" to category.value.lowercase(), // Store category in lowercase for consistency
             "assignedCoaches" to _assignedCoaches.value,
             "timestamp" to System.currentTimeMillis(),
+            "createdByRole" to "admin",
+            "approvalStatus" to "approved",
             "coachOrganized" to false,
             "organizingCoach" to "",
             "teamLineup" to emptyMap<String, List<String>>(),
@@ -218,22 +236,55 @@ class ScheduleEventViewModel : ViewModel() {
         _snackbarMessage.value = null
     }
     
+    fun approveCoachEvent(eventId: String) {
+        _isLoading.value = true
+        firestore.collection("events").document(eventId)
+            .get()
+            .addOnSuccessListener { doc ->
+                val invitedParticipants = doc.get("invitedParticipants") as? List<String> ?: emptyList()
+                firestore.collection("events").document(eventId)
+                    .update("approvalStatus", "approved")
+                    .addOnSuccessListener {
+                        invitedParticipants.forEach { email ->
+                            val registrationData = mapOf(
+                                "eventId" to eventId,
+                                "user" to email,
+                                "timestamp" to System.currentTimeMillis()
+                            )
+                            firestore.collection("event_registrations").add(registrationData)
+                        }
+                        _snackbarMessage.value = "✅ Coach event approved"
+                        loadEvents()
+                    }
+                    .addOnFailureListener {
+                        _snackbarMessage.value = "❌ Failed to approve event: ${it.message}"
+                        _isLoading.value = false
+                    }
+            }
+            .addOnFailureListener {
+                _snackbarMessage.value = "❌ Failed to load event for approval: ${it.message}"
+                _isLoading.value = false
+            }
+    }
+    
     data class EventData(
-    val id: String = "",
-    val name: String = "",
-    val venue: String = "",
-    val timing: String = "",
-    val date: String = "",
-    val equipment: String = "",
-    val staffRequired: String = "",
-    val maxParticipants: String = "",
-    val logistics: String = "",
-    val category: String = "",
-    val assignedCoaches: List<String> = emptyList(),
-    val coachOrganized: Boolean = false,
-    val organizingCoach: String = "",
-    val teamLineup: Map<String, List<String>> = emptyMap(),
-    val matchResults: Map<String, String> = emptyMap(),
-    val resultsApproved: Boolean = false
-)
+        val id: String = "",
+        val name: String = "",
+        val venue: String = "",
+        val timing: String = "",
+        val date: String = "",
+        val equipment: String = "",
+        val staffRequired: String = "",
+        val maxParticipants: String = "",
+        val logistics: String = "",
+        val category: String = "",
+        val assignedCoaches: List<String> = emptyList(),
+        val createdByRole: String = "",
+        val approvalStatus: String = "approved",
+        val coachOrganized: Boolean = false,
+        val organizingCoach: String = "",
+        val teamLineup: Map<String, List<String>> = emptyMap(),
+        val matchResults: Map<String, String> = emptyMap(),
+        val resultsApproved: Boolean = false
+    )
 }

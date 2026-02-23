@@ -74,7 +74,7 @@ fun ModifyProfilesScreen(
                 Text(
                     "Approve & Edit User Profiles",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        color = Color.DarkGray,
+                        color = Color.Black,
                         fontWeight = FontWeight.Medium
                     )
                 )
@@ -83,7 +83,7 @@ fun ModifyProfilesScreen(
 
                 when {
                     loading -> CircularProgressIndicator(color = appGreen)
-                    users.isEmpty() -> Text("No users found.", color = Color.Gray)
+                    users.isEmpty() -> Text("No users found.", color = Color.Black)
                     else -> {
                         users.forEachIndexed { index, user ->
                             EditableUserCard(
@@ -141,7 +141,7 @@ fun EditableUserCard(
             )
             Text(
                 text = "Email: ${user.email}",
-                style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
+                style = MaterialTheme.typography.bodySmall.copy(color = Color.Black),
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 

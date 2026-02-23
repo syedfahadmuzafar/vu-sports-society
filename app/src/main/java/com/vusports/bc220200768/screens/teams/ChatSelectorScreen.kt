@@ -77,8 +77,15 @@ fun ChatSelectorScreen(
         viewModel.loadChatGroups(currentUserEmail)
     }
 
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
     Scaffold(
-        topBar = { WhatsAppStyleTopBar() },
+        topBar = {
+            WhatsAppStyleTopBar(
+                navController = navController,
+                onLogoutRequested = { showLogoutDialog = true }
+            )
+        },
         containerColor = Color.White
     ) { padding ->
         Column(
@@ -110,12 +117,40 @@ fun ChatSelectorScreen(
             }
         }
     }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to logout?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showLogoutDialog = false
+                    com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WhatsAppStyleTopBar() {
+fun WhatsAppStyleTopBar(
+    navController: NavController,
+    onLogoutRequested: () -> Unit
+) {
     val whatsAppGreen = Color(0xFF128C7E)
+    var expanded by remember { mutableStateOf(false) }
 
     TopAppBar(
         title = {
@@ -129,11 +164,33 @@ fun WhatsAppStyleTopBar() {
             containerColor = whatsAppGreen
         ),
         actions = {
-            IconButton(onClick = { /* Add menu action */ }) {
+            IconButton(onClick = { expanded = true }) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = "More options",
                     tint = Color.White
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(Color.White)
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Home", color = Color.Black) },
+                    onClick = {
+                        expanded = false
+                        navController.navigate("userDashboard") {
+                            popUpTo("userDashboard") { inclusive = true }
+                        }
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Logout", color = Color.Black) },
+                    onClick = {
+                        expanded = false
+                        onLogoutRequested()
+                    }
                 )
             }
         }
@@ -224,7 +281,7 @@ fun ChatGroupItem(
                 Text(
                     text = group.timestamp?.let { formatChatGroupTimestamp(it) } ?: "",
                     fontSize = 12.sp,
-                    color = if (group.unreadCount > 0) whatsAppGreen else Color.Gray
+                    color = if (group.unreadCount > 0) whatsAppGreen else Color.Black
                 )
             }
 
@@ -238,7 +295,7 @@ fun ChatGroupItem(
                 Text(
                     text = group.lastMessage,
                     fontSize = 14.sp,
-                    color = Color.Gray,
+                    color = Color.Black,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)

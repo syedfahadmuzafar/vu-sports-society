@@ -263,7 +263,7 @@ fun SportItem(sport: String, isSelected: Boolean, onClick: () -> Unit) {
         Icon(
             imageVector = Icons.Default.SportsSoccer,
             contentDescription = null,
-            tint = if (isSelected) Color(0xFF00BFA6) else Color.Gray,
+            tint = if (isSelected) Color(0xFF00BFA6) else Color.Black,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
@@ -317,7 +317,7 @@ fun ParticipantItem(participant: ParticipantInfo, isSelected: Boolean, onToggleS
         
         Column {
             Text(participant.name, fontWeight = FontWeight.Medium)
-            Text(participant.email, fontSize = 12.sp, color = Color.Gray)
+            Text(participant.email, fontSize = 12.sp, color = Color.Black)
         }
         
         Spacer(modifier = Modifier.weight(1f))
@@ -343,13 +343,13 @@ fun EmptyStateMessage(message: String) {
                 imageVector = Icons.Default.SportsSoccer,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
-                tint = Color.Gray
+                tint = Color.Black
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = message,
                 fontSize = 16.sp,
-                color = Color.Gray,
+                color = Color.Black,
                 fontWeight = FontWeight.Medium
             )
         }

@@ -12,6 +12,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+ 
+data class CoachEventApproval(
+    val id: String,
+    val name: String,
+    val createdBy: String,
+    val invitedParticipants: List<String>
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,11 +28,23 @@ fun ApproveTeamsEventsScreen() {
 
     var pendingTeams by remember { mutableStateOf<List<Pair<String, String>>>(emptyList()) } // (id, name)
     var pendingEventRegs by remember { mutableStateOf<List<Triple<String, String, String>>>(emptyList()) } // (docId, eventId, user)
+    var pendingCoachEvents by remember { mutableStateOf<List<CoachEventApproval>>(emptyList()) }
 
     var loading by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         try {
+            val coachEventsSnapshot = db.collection("events")
+                .whereEqualTo("createdByRole", "coach")
+                .whereEqualTo("approvalStatus", "pending")
+                .get()
+                .await()
+            pendingCoachEvents = coachEventsSnapshot.documents.mapNotNull { doc ->
+                val name = doc.getString("eventName") ?: return@mapNotNull null
+                val createdBy = doc.getString("createdBy") ?: "unknown"
+                val invited = doc.get("invitedParticipants") as? List<String> ?: emptyList()
+                CoachEventApproval(doc.id, name, createdBy, invited)
+            }
             // Fetch unapproved teams
             val teamSnapshot = db.collection("teams")
                 .whereEqualTo("approved", false)
@@ -72,6 +91,43 @@ fun ApproveTeamsEventsScreen() {
                 return@Column
             }
 
+            Text("Pending Coach-Created Events", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
+            if (pendingCoachEvents.isEmpty()) {
+                Text("No coach event approvals needed.")
+            } else {
+                pendingCoachEvents.forEach { ev ->
+                    ApprovalCard(
+                        name = "Event: ${ev.name}\nCoach: ${ev.createdBy}",
+                        onApprove = {
+                            db.collection("events").document(ev.id)
+                                .update("approvalStatus", "approved")
+                                .addOnSuccessListener {
+                                    ev.invitedParticipants.forEach { email ->
+                                        val reg = mapOf(
+                                            "eventId" to ev.id,
+                                            "user" to email,
+                                            "timestamp" to System.currentTimeMillis()
+                                        )
+                                        db.collection("event_registrations").add(reg)
+                                    }
+                                    Toast.makeText(context, "Approved ${ev.name}", Toast.LENGTH_SHORT).show()
+                                    pendingCoachEvents = pendingCoachEvents.filterNot { it.id == ev.id }
+                                }
+                        },
+                        onReject = {
+                            db.collection("events").document(ev.id)
+                                .delete()
+                                .addOnSuccessListener {
+                                    Toast.makeText(context, "Rejected ${ev.name}", Toast.LENGTH_SHORT).show()
+                                    pendingCoachEvents = pendingCoachEvents.filterNot { it.id == ev.id }
+                                }
+                        }
+                    )
+                }
+            }
+            
+            Spacer(Modifier.height(24.dp))
             // Section 1: Pending Teams
             Text("Pending Team Formations", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))

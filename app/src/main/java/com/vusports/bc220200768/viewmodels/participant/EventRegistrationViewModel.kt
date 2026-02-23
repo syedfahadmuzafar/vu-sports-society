@@ -116,6 +116,8 @@ class EventRegistrationViewModel : ViewModel() {
                 // Now get events and filter by team association and coach selection
                 val snapshot = db.collection("events").get().await()
                 val allEvents = snapshot.documents.mapNotNull { doc ->
+                    val status = doc.getString("approvalStatus") ?: "approved"
+                    if (status != "approved") return@mapNotNull null
                     val eventTeams = doc.get("teams") as? List<String> ?: emptyList()
                     val selectedParticipants = doc.get("selectedParticipants") as? List<String> ?: emptyList()
                     val coachOrganized = doc.getBoolean("coachOrganized") ?: false

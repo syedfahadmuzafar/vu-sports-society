@@ -231,18 +231,18 @@ fun RegisterScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(text = sport, color = if (isDisabled) Color.Gray else Color.Black)
+                        Text(text = sport, color = Color.Black)
                         if (isDisabled) {
                             if (selectedRole == "Participant") {
                                 Text(
                                     text = "No coach assigned",
-                                    color = Color.Gray,
+                                    color = Color.Black,
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             } else {
                                 Text(
                                     text = "Coach already assigned",
-                                    color = Color.Gray,
+                                    color = Color.Black,
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }

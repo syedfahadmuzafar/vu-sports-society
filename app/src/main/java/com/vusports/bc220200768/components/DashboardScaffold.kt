@@ -97,18 +97,10 @@ fun DashboardScaffold(
         topBar = {
             Column {
                 CenterAlignedTopAppBar(
-                    title = { Text(title) },
+                    title = { Text(title, color = Color.White) },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = Color(0xFF00BFA6)
-                    ),
-                    actions = {
-                        IconButton(onClick = { showLogoutDialog = true }) {
-
-                                Icon(Icons.Default.Logout,
-                                contentDescription = "Logout", tint = Color.White)
-
-                        }
-                    }
+                    )
                 )
 
 

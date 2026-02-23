@@ -184,7 +184,7 @@ fun DashboardCard(label: String, icon: ImageVector, desc: String = "", onClick: 
         ) {
             Icon(icon, contentDescription = label, modifier = Modifier.size(32.dp), tint = Color(0xFF00BFA6))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(label, style = MaterialTheme.typography.titleSmall)
+                Text(label, style = MaterialTheme.typography.titleSmall, color = Color.Black)
                 if (desc.isNotEmpty()) {
                     Text(desc, color = Color.Gray, style = MaterialTheme.typography.bodySmall)
                 }

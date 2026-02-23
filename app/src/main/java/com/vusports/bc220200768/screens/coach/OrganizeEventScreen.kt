@@ -414,7 +414,7 @@ fun TeamMemberRoleCard(
                     Text(
                         text = member.email,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = Color.Black
                     )
                 }
             }

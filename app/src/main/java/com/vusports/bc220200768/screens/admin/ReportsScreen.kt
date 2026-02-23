@@ -155,13 +155,14 @@ fun ReportOption(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Black
             )
             
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = Color.Black
             )
         }
     }

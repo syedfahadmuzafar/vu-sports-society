@@ -292,7 +292,7 @@ fun LoginScreen(navController: NavController) {
             Text(
                 text = "Don't have an account? Register",
                 fontSize = 14.sp,
-                color = Color.Gray,
+                color = Color.Black,
                 modifier = Modifier.clickable { navController.navigate("register") }
             )
         }

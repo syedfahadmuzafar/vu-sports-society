@@ -67,6 +67,7 @@ fun ProfileScreen(navController: NavController) {
     var fieldToEdit by remember { mutableStateOf("") }
     var fieldValue by remember { mutableStateOf("") }
     var showPreferencesDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
 
     val launcher =
@@ -190,7 +191,7 @@ fun ProfileScreen(navController: NavController) {
         // Sports Section
         SectionCard(if (userRole == "coach") "Sports Expertise" else "Preferred Sports") {
             if (userSports.isEmpty()) {
-                Text("No sports selected.", color = Color.Gray)
+                Text("No sports selected.", color = Color.Black)
             } else {
                 Column {
                     userSports.forEach { sport ->
@@ -219,16 +220,16 @@ fun ProfileScreen(navController: NavController) {
         }
 
         SectionCard("Achievements") {
-            Text(userAchievements.ifEmpty { "No achievements yet." }, color = Color.Gray)
+            Text(userAchievements.ifEmpty { "No achievements yet." }, color = Color.Black)
         }
 
         if (userRole == "coach") {
             SectionCard("Team Management Details") {
-                Text(teamManagement.ifEmpty { "Not added yet." }, color = Color.Gray)
+                Text(teamManagement.ifEmpty { "Not added yet." }, color = Color.Black)
             }
 
             SectionCard("Availability") {
-                Text(availability.ifEmpty { "Not specified." }, color = Color.Gray)
+                Text(availability.ifEmpty { "Not specified." }, color = Color.Black)
             }
         }
 
@@ -274,13 +275,36 @@ fun ProfileScreen(navController: NavController) {
         }
 
         SettingItem("Logout", "", Icons.Default.Logout) {
-            auth.signOut()
-            navController.navigate("login") {
-                popUpTo("profile") { inclusive = true }
-            }
+            showLogoutDialog = true
         }
 
         Spacer(Modifier.height(24.dp))
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to logout?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        auth.signOut()
+                        navController.navigate("login") {
+                            popUpTo("profile") { inclusive = true }
+                        }
+                        showLogoutDialog = false
+                    }
+                ) {
+                    Text("Logout")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     // Sports Preference / Expertise Dialog
@@ -378,12 +402,12 @@ fun ProfileScreen(navController: NavController) {
 
                             Text(
                                 text = sport,
-                                color = if (isDisabled) Color.Gray else Color.Black
+                                color = Color.Black
                             )
 
                             if (disabledReason.isNotEmpty()) {
                                 Spacer(Modifier.width(6.dp))
-                                Text("($disabledReason)", color = Color.Gray, fontSize = 12.sp)
+                                Text("($disabledReason)", color = Color.Black, fontSize = 12.sp)
                             }
                         }
                     }
@@ -464,11 +488,11 @@ fun SettingItem(title: String, value: String, icon: ImageVector, onClick: () -> 
                 Column {
                     Text(title, fontWeight = FontWeight.Medium)
                     if (value.isNotEmpty()) {
-                        Text(value, fontSize = 12.sp, color = Color.Gray)
+                        Text(value, fontSize = 12.sp, color = Color.Black)
                     }
                 }
             }
-            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color.Gray)
+            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = Color.Black)
         }
     }
 }

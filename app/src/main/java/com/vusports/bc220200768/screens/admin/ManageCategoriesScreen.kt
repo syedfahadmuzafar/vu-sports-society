@@ -245,7 +245,7 @@ fun ManageCategoriesScreen(
                     ) {
                         Text(
                             "No categories available. Add your first category above.",
-                            color = Color.Gray,
+                            color = Color.Black,
                             modifier = Modifier.padding(top = 32.dp)
                         )
                     }
@@ -372,7 +372,7 @@ fun CategoryCard(
 
             Text(
                 "Organizer: ${if (category.organizerName.isNotBlank()) category.organizerName else "Not Assigned"}",
-                color = Color.Gray
+                color = Color.Black
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -388,7 +388,8 @@ fun CategoryCard(
 
                 DropdownMenu(
                     expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.background(Color.White)
                 ) {
                     organizers.forEach { (name, email) ->
                         DropdownMenuItem(

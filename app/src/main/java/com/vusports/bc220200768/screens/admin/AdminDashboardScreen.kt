@@ -205,7 +205,7 @@ fun AdminHomeGrid(navController: NavController) {
                         tint = Color(0xFF00BFA6),
                         modifier = Modifier.size(32.dp)
                     )
-                    Text(screen.label, style = MaterialTheme.typography.titleSmall)
+                    Text(screen.label, style = MaterialTheme.typography.titleSmall, color = Color.Black)
                 }
             }
         }

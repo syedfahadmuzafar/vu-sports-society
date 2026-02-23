@@ -153,7 +153,7 @@ fun PerformanceTrackingScreen(navController: NavController, viewModel: Performan
                                     Text(
                                         "No event performance data available",
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = Color.Gray,
+                                        color = Color.Black,
                                         textAlign = TextAlign.Center
                                     )
                                 }
@@ -187,7 +187,7 @@ fun StatItem(label: String, value: String, highlight: Boolean = false) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (highlight) Color(0xFF00BFA6) else Color.Gray
+                color = if (highlight) Color(0xFF00BFA6) else Color.Black
             )
         }
         Text(
@@ -254,7 +254,7 @@ fun EventPerformanceCard(event: EventPerformance) {
             Text(
                 text = "Date: ${event.date}",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = Color.Black
             )
             
             if (event.notes.isNotEmpty()) {
@@ -267,7 +267,7 @@ fun EventPerformanceCard(event: EventPerformance) {
                 Text(
                     text = event.notes,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.DarkGray
+                    color = Color.Black
                 )
             }
         }
